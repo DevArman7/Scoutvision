@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScoutVision | Football Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .glass { background: rgba(23, 27, 38, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+  </style>
+</head>
+<body class="bg-[#0b0e14] text-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-[#10141d]/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-lg">⚽</div>
+        <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">ScoutVision</span>
+      </div>
+      <div class="text-xs text-slate-400 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">Top 5 European Leagues 23/24</div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Search Bar & Filters -->
+    <div class="glass p-4 rounded-2xl mb-8 flex flex-col md:flex-row gap-4 items-center">
+      <div class="relative flex-1 w-full">
+        <input 
+          id="searchInput" 
+          type="text" 
+          placeholder="Search by player name (e.g., Bellingham, Rice, Saka)..."
+          class="w-full bg-[#161b26] border border-slate-700/60 rounded-xl px-4 py-3 pl-11 text-sm focus:outline-none focus:border-emerald-500 transition"
+          oninput="handleSearch(this.value)"
+        />
+        <svg class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        
+        <!-- Search Autocomplete Dropdown -->
+        <div id="searchResults" class="hidden absolute top-14 left-0 right-0 bg-[#161b26] border border-slate-700 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50"></div>
+      </div>
+
+      <div class="flex gap-2 w-full md:w-auto">
+        <button onclick="filterPosition('')" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-emerald-500 text-black">All</button>
+        <button onclick="filterPosition('FW')" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300">Forwards</button>
+        <button onclick="filterPosition('MF')" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300">Midfielders</button>
+        <button onclick="filterPosition('DF')" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300">Defenders</button>
+      </div>
+    </div>
+
+    <!-- Player Analytics Dashboard -->
+    <div id="dashboard" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Left: Player Profile & Radar Chart -->
+      <div class="lg:col-span-7 space-y-6">
+        <div class="glass p-6 rounded-2xl relative overflow-hidden">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <span id="playerPosBadge" class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MF</span>
+              <h1 id="playerName" class="text-3xl font-extrabold mt-2 text-white">Player Name</h1>
+              <p id="playerMeta" class="text-sm text-slate-400 mt-1">Club • Minutes Played</p>
+            </div>
+          </div>
+
+          <!-- Radar Chart -->
+          <div class="w-full max-w-[440px] mx-auto my-4">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Metric Percentile Tiles -->
+        <div id="statTiles" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+      </div>
+
+      <!-- Right: Similar Profiles ("Moneyball" Matches) -->
+      <div class="lg:col-span-5 space-y-6">
+        <div class="glass p-6 rounded-2xl">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <span>🎯</span> Statistical Twins
+            </h2>
+            <span class="text-xs text-slate-400">Cosine Similarity</span>
+          </div>
+
+          <div id="similarList" class="space-y-4">
+            <!-- Dynamic cards injected here -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Empty State / Welcome Screen -->
+    <div id="emptyState" class="text-center py-24">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-800/60 border border-slate-700 flex items-center justify-center text-2xl">🔍</div>
+      <h3 class="text-lg font-semibold text-white">Search any player to launch radar</h3>
+      <p class="text-sm text-slate-400 mt-1">Try searching for "Vinicius", "Rodri", or "Saliba"</p>
+    </div>
+  </main>
+
+  <script>
+    let radarChartInstance = null;
+
+    async function handleSearch(q) {
+      const resultsDiv = document.getElementById('searchResults');
+      if (!q || q.length < 2) {
+        resultsDiv.classList.add('hidden');
+        return;
+      }
+
+      const res = await fetch(`/api/scout/search?q=${encodeURIComponent(q)}`);
+      const players = await res.json();
+
+      if (!players.length) {
+        resultsDiv.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">No players found</div>`;
+      } else {
+        resultsDiv.innerHTML = players.slice(0, 8).map(p => `
+          <div onclick="selectPlayer(${p.id})" class="px-4 py-3 hover:bg-slate-800/80 cursor-pointer flex justify-between items-center border-b border-slate-800/40 last:border-0">
+            <div>
+              <div class="font-medium text-sm text-white">${p.name}</div>
+              <div class="text-xs text-slate-400">${p.team} • ${p.position}</div>
+            </div>
+            <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">${p.minutes} mins</span>
+          </div>
+        `).join('');
+      }
+      resultsDiv.classList.remove('hidden');
+    }
+
+    async function selectPlayer(id) {
+      document.getElementById('searchResults').classList.add('hidden');
+      document.getElementById('searchInput').value = '';
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+
+      // Fetch Profile & Similars
+      const [profileRes, simRes] = await Promise.all([
+        fetch(`/api/scout/player/${id}`),
+        fetch(`/api/scout/player/${id}/similar?top_k=5`)
+      ]);
+
+      const profile = await profileRes.json();
+      const similars = await simRes.json();
+
+      renderProfile(profile);
+      renderSimilars(similars);
+    }
+
+    function renderProfile(profile) {
+      document.getElementById('playerName').innerText = profile.name;
+      document.getElementById('playerMeta').innerText = `${profile.team} • ${profile.minutes.toLocaleString()} Minutes`;
+      document.getElementById('playerPosBadge').innerText = profile.position;
+
+      // Extract Radar Metrics
+      const labels = Object.keys(profile.stats).map(k => k.replace('_p90', '').replace('_', ' ').toUpperCase());
+      const percentiles = Object.values(profile.stats).map(s => s.percentile);
+      const rawValues = Object.values(profile.stats).map(s => s.raw_value);
+
+      renderRadar(labels, percentiles);
+
+      // Render Stat Tiles
+      const tilesContainer = document.getElementById('statTiles');
+      tilesContainer.innerHTML = Object.entries(profile.stats).map(([k, v]) => `
+        <div class="glass p-3 rounded-xl">
+          <div class="text-[11px] uppercase tracking-wider text-slate-400 truncate">${k.replace('_p90', '').replace('_', ' ')}</div>
+          <div class="text-lg font-bold text-white mt-1">${v.raw_value}</div>
+          <div class="text-[11px] font-semibold text-emerald-400">${v.percentile}th percentile</div>
+        </div>
+      `).join('');
+    }
+
+    function renderRadar(labels, data) {
+      const ctx = document.getElementById('radarChart').getContext('2d');
+      if (radarChartInstance) radarChartInstance.destroy();
+
+      radarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Position Percentile',
+            data: data,
+            backgroundColor: 'rgba(16, 185, 129, 0.25)',
+            borderColor: '#10b981',
+            borderWidth: 2,
+            pointBackgroundColor: '#10b981',
+            pointBorderColor: '#fff',
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          scales: {
+            r: {
+              min: 0,
+              max: 100,
+              ticks: { display: false, stepSize: 25 },
+              grid: { color: 'rgba(255, 255, 255, 0.08)' },
+              angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+              pointLabels: {
+                color: '#94a3b8',
+                font: { size: 10, weight: '600' }
+              }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    function renderSimilars(similars) {
+      const container = document.getElementById('similarList');
+      if (!similars.length) {
+        container.innerHTML = `<div class="text-xs text-slate-400">No close matches found.</div>`;
+        return;
+      }
+
+      container.innerHTML = similars.map(p => `
+        <div onclick="selectPlayer(${p.id})" class="p-3.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 cursor-pointer transition">
+          <div class="flex justify-between items-center mb-1.5">
+            <div>
+              <div class="font-bold text-sm text-white">${p.name}</div>
+              <div class="text-xs text-slate-400">${p.team}</div>
+            </div>
+            <span class="text-sm font-extrabold text-emerald-400">${p.similarity_score}%</span>
+          </div>
+          <div class="w-full bg-slate-700/50 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full" style="width: ${p.similarity_score}%"></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Default loader
+    window.addEventListener('DOMContentLoaded', () => {
+      selectPlayer(1);
+    });
+  </script>
+</body>
+</html>
