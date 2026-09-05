@@ -101,28 +101,117 @@ class ScoutingEngine:
         existing_cols = [c for c in columns_to_return if c in filtered.columns]
         return filtered[existing_cols].head(50).to_dict(orient="records")
 
+    def _generate_scouting_report(self, row, stats: dict) -> dict:
+        # Helper to safely retrieve percentiles
+        def p(metric_name):
+            return stats.get(metric_name, {}).get("percentile", 50.0)
+
+        # 1. Composite Scores (0-100)
+        category_scores = {
+            "Attacking": round((p("goals_p90") * 0.6 + p("xg_p90") * 0.4), 1),
+            "Creativity": round((p("xa_p90") * 0.6 + p("assists_p90") * 0.4), 1),
+            "Progression": round((p("progressive_carries_p90") * 0.5 + p("progressive_passes_p90") * 0.5), 1),
+            "Passing": round(p("progressive_passes_p90"), 1),
+            "Defending": round((p("tackles_p90") * 0.5 + p("interceptions_p90") * 0.5), 1)
+        }
+
+        # Human-readable labels for metrics
+        metric_labels = {
+            "goals_p90": "Goal threat",
+            "xg_p90": "Box penetration & shot quality",
+            "assists_p90": "Final ball execution",
+            "xa_p90": "Chance creation",
+            "progressive_passes_p90": "Progressive passing",
+            "progressive_carries_p90": "Ball carrying & drive",
+            "tackles_p90": "Defensive ground duels",
+            "interceptions_p90": "Anticipation & ball recoveries"
+        }
+
+        # 2. Dynamic Strengths (Percentile >= 75) & Weaknesses (Percentile <= 35)
+        strengths = []
+        weaknesses = []
+
+        for metric, meta in stats.items():
+            pct = meta["percentile"]
+            label = metric_labels.get(metric, metric.replace("_p90", "").replace("_", " ").title())
+            if pct >= 75:
+                strengths.append(label)
+            elif pct <= 35:
+                weaknesses.append(label)
+
+        if not strengths:
+            strengths.append("Balanced profile across phase play")
+        if not weaknesses:
+            weaknesses.append("No critical statistical liabilities")
+
+        # 3. Tactical Archetype Generator
+        pos = str(row.get("position", "")).upper()
+        att = category_scores["Attacking"]
+        prog = category_scores["Progression"]
+        dfn = category_scores["Defending"]
+        cre = category_scores["Creativity"]
+
+        if "MF" in pos:
+            if prog >= 80 and att >= 75 and dfn >= 60:
+                archetype = "Progressive Box-to-Box Midfielder"
+            elif dfn >= 75 and prog <= 60:
+                archetype = "Defensive Anchor / Ball-Winner"
+            elif cre >= 80 or att >= 80:
+                archetype = "Advanced Playmaker / Half-Space Creator"
+            elif prog >= 75 and dfn >= 70:
+                archetype = "Deep-Lying Controller"
+            else:
+                archetype = "Central Engine"
+        elif "FW" in pos:
+            if att >= 80 and cre >= 70:
+                archetype = "Complete Forward"
+            elif att >= 80:
+                archetype = "Clinical Poacher / Pure Finisher"
+            elif prog >= 75:
+                archetype = "Inside Forward / Dynamic Dribbler"
+            else:
+                archetype = "Pressing Forward"
+        elif "DF" in pos:
+            if prog >= 75:
+                archetype = "Ball-Playing Modern Defender"
+            elif dfn >= 80:
+                archetype = "Aggressive Stopper"
+            else:
+                archetype = "Positional Cover Defender"
+        else:
+            archetype = "Utility Specialist"
+
+        return {
+            "ratings": category_scores,
+            "strengths": strengths[:3],
+            "weaknesses": weaknesses[:3],
+            "archetype": archetype
+        }
+
     def get_player_profile(self, player_id: int) -> Optional[Dict[str, Any]]:
         player_row = self.df[self.df["id"] == player_id]
         if player_row.empty:
             return None
-        
+
         row = player_row.iloc[0]
-        
-        # Build radar-ready metrics (Raw Value vs Percentile)
+
         stats = {}
         for feat in self.feature_columns:
             stats[feat] = {
                 "raw_value": float(row[feat]),
                 "percentile": float(row.get(f"{feat}_pct", 50.0))
             }
-            
+
+        report = self._generate_scouting_report(row, stats)
+
         return {
             "id": int(row["id"]),
             "name": str(row["name"]),
             "team": str(row.get("team", "Unknown")),
             "position": str(row.get("position", "N/A")),
             "minutes": int(row.get("minutes", 0)),
-            "stats": stats
+            "stats": stats,
+            "report": report
         }
 
     def get_similar_players(self, player_id: int, top_k: int = 5) -> Optional[List[Dict[str, Any]]]:

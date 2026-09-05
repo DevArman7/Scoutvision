@@ -75,6 +75,35 @@
         <div id="statTiles" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
       </div>
 
+      <!-- Scouting Dossier Card -->
+<div class="glass p-6 rounded-2xl space-y-6">
+  <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Scouting Intelligence Report</h3>
+    <span id="playerArchetype" class="text-xs font-semibold px-3 py-1 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">
+      Archetype
+    </span>
+  </div>
+
+  <!-- Composite Progress Bars -->
+  <div id="categoryBars" class="space-y-3"></div>
+
+  <!-- Strengths & Weaknesses Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
+    <div>
+      <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+        <span>🟢</span> Strengths
+      </div>
+      <ul id="strengthsList" class="space-y-1 text-sm text-slate-300"></ul>
+    </div>
+    <div>
+      <div class="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+        <span>🔴</span> Weaknesses
+      </div>
+      <ul id="weaknessesList" class="space-y-1 text-sm text-slate-300"></ul>
+    </div>
+  </div>
+</div>
+
       <!-- Right: Similar Profiles ("Moneyball" Matches) -->
       <div class="lg:col-span-5 space-y-6">
         <div class="glass p-6 rounded-2xl">
