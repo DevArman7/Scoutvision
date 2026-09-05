@@ -14,51 +14,75 @@
 </head>
 <body class="bg-[#0b0e14] text-slate-100 min-h-screen">
 
-  <!-- Top Navbar -->
+  <!-- Header -->
   <header class="border-b border-slate-800 bg-[#10141d]/90 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="setMode('single')">
         <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-lg shadow-lg shadow-emerald-500/20">⚽</div>
         <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">ScoutVision</span>
       </div>
-      <div class="text-xs text-slate-400 bg-slate-800/80 px-3.5 py-1.5 rounded-full border border-slate-700">Top 5 European Leagues 23/24</div>
+      
+      <!-- Mode Switcher -->
+      <div class="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl">
+        <button id="singleModeBtn" onclick="setMode('single')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition">Single Scout</button>
+        <button id="compareModeBtn" onclick="setMode('compare')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">⚔️ Comparison</button>
+      </div>
     </div>
   </header>
 
-  <!-- Main Container -->
   <main class="max-w-7xl mx-auto px-6 py-8">
     
-    <!-- Search & Filter Controls -->
-    <div class="glass p-4 rounded-2xl mb-8 flex flex-col md:flex-row gap-4 items-center">
+    <!-- SINGLE SEARCH BAR (Used in Solo Scout) -->
+    <div id="singleSearchContainer" class="glass p-4 rounded-2xl mb-8 flex flex-col md:flex-row gap-4 items-center">
       <div class="relative flex-1 w-full">
         <input 
           id="searchInput" 
           type="text" 
-          placeholder="Search by player name (e.g., Bellingham, Rice, Saka)..."
+          placeholder="Search by player name (e.g., Goretzka, Bellingham, Rodri)..."
           class="w-full bg-[#161b26] border border-slate-700/70 rounded-xl px-4 py-3 pl-11 text-sm focus:outline-none focus:border-emerald-500 transition"
-          oninput="handleSearch(this.value)"
+          oninput="handleSearch(this.value, 'single')"
         />
         <svg class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        
-        <!-- Search Results Dropdown -->
         <div id="searchResults" class="hidden absolute top-14 left-0 right-0 bg-[#161b26] border border-slate-700 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50"></div>
-      </div>
-
-      <div class="flex gap-2 w-full md:w-auto">
-        <button onclick="filterPosition('')" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-emerald-500 text-black">All</button>
-        <button onclick="filterPosition('FW')" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300">Forwards</button>
-        <button onclick="filterPosition('MF')" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300">Midfielders</button>
-        <button onclick="filterPosition('DF')" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300">Defenders</button>
       </div>
     </div>
 
-    <!-- Dashboard Content Area -->
-    <div id="dashboard" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      
-      <!-- LEFT COLUMN: Profile + Radar + Stat Tiles (7 Cols) -->
+    <!-- COMPARISON SELECTORS BAR (Used in Compare Mode) -->
+    <div id="compareSearchContainer" class="hidden glass p-5 rounded-2xl mb-8">
+      <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">Head-to-Head Scout Matchup</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Player A Selector -->
+        <div class="relative">
+          <label class="text-[11px] font-semibold text-emerald-400 mb-1 block uppercase">Player 1</label>
+          <input 
+            id="searchPlayerA" 
+            type="text" 
+            placeholder="Search Player 1..."
+            class="w-full bg-[#161b26] border border-emerald-500/40 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 transition"
+            oninput="handleSearch(this.value, 'playerA')"
+          />
+          <div id="resultsPlayerA" class="hidden absolute top-16 left-0 right-0 bg-[#161b26] border border-slate-700 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50"></div>
+        </div>
+
+        <!-- Player B Selector -->
+        <div class="relative">
+          <label class="text-[11px] font-semibold text-cyan-400 mb-1 block uppercase">Player 2</label>
+          <input 
+            id="searchPlayerB" 
+            type="text" 
+            placeholder="Search Player 2..."
+            class="w-full bg-[#161b26] border border-cyan-500/40 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-400 transition"
+            oninput="handleSearch(this.value, 'playerB')"
+          />
+          <div id="resultsPlayerB" class="hidden absolute top-16 left-0 right-0 bg-[#161b26] border border-slate-700 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 1: SINGLE SCOUT DASHBOARD -->
+    <div id="singleDashboard" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Left Column: Profile & Radar -->
       <div class="lg:col-span-7 space-y-6">
-        
-        <!-- Player Radar Card -->
         <div class="glass p-6 rounded-2xl">
           <div class="flex items-start justify-between">
             <div>
@@ -66,86 +90,165 @@
               <h1 id="playerName" class="text-3xl font-extrabold mt-2 text-white">Player Name</h1>
               <p id="playerMeta" class="text-sm text-slate-400 mt-1">Club • Minutes</p>
             </div>
-            <div id="playerArchetype" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 max-w-[220px] text-right">
-              Tactical Archetype
+            <div class="flex flex-col items-end gap-2">
+              <span id="playerArchetype" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 text-right">Archetype</span>
+              <button onclick="initiateCompareWithCurrent()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded-lg border border-slate-700 transition">⚔️ Compare This Player</button>
             </div>
           </div>
-
           <div class="w-full max-w-[420px] mx-auto my-6">
-            <canvas id="radarChart"></canvas>
+            <canvas id="singleRadarChart"></canvas>
           </div>
         </div>
-
-        <!-- Metric Percentile Tiles -->
         <div id="statTiles" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
-
       </div>
 
-      <!-- RIGHT COLUMN: Scouting Dossier & Statistical Twins (5 Cols) -->
+      <!-- Right Column: Dossier & Twins -->
       <div class="lg:col-span-5 space-y-6">
-        
-        <!-- Scouting Intelligence Dossier -->
         <div class="glass p-6 rounded-2xl space-y-6">
           <div class="border-b border-slate-800 pb-3">
-            <h2 class="text-base font-bold text-white tracking-wide flex items-center gap-2">
-              <span>📋</span> Scouting Intelligence
-            </h2>
+            <h2 class="text-base font-bold text-white flex items-center gap-2"><span>📋</span> Scouting Intelligence</h2>
           </div>
-
-          <!-- Category Progress Bars -->
           <div class="space-y-3.5">
             <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Attribute Ratings</div>
             <div id="categoryBars" class="space-y-3"></div>
           </div>
-
-          <!-- Strengths and Weaknesses -->
           <div class="pt-4 border-t border-slate-800 space-y-4">
             <div>
-              <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <span>🟢</span> Standout Strengths
-              </div>
+              <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><span>🟢</span> Standout Strengths</div>
               <ul id="strengthsList" class="space-y-1.5 text-sm text-slate-300"></ul>
             </div>
-
             <div>
-              <div class="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <span>🔴</span> Tactical Limitations
-              </div>
+              <div class="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><span>🔴</span> Tactical Limitations</div>
               <ul id="weaknessesList" class="space-y-1.5 text-sm text-slate-300"></ul>
             </div>
           </div>
         </div>
 
-        <!-- Statistical Twins ("Moneyball" Matches) -->
         <div class="glass p-6 rounded-2xl">
           <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-            <h2 class="text-base font-bold text-white flex items-center gap-2">
-              <span>🎯</span> Statistical Twins
-            </h2>
+            <h2 class="text-base font-bold text-white flex items-center gap-2"><span>🎯</span> Statistical Twins</h2>
             <span class="text-xs text-slate-400">Cosine Similarity</span>
           </div>
-
           <div id="similarList" class="space-y-3"></div>
         </div>
-
       </div>
-
     </div>
 
-    <!-- Empty State / Fallback -->
-    <div id="emptyState" class="hidden text-center py-24">
-      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-800/60 border border-slate-700 flex items-center justify-center text-2xl">🔍</div>
-      <h3 class="text-lg font-semibold text-white">Search any player to launch radar</h3>
-      <p class="text-sm text-slate-400 mt-1">Try searching for "Vinicius", "Rodri", or "Saliba"</p>
+    <!-- VIEW 2: HEAD-TO-HEAD COMPARISON DASHBOARD -->
+    <div id="compareDashboard" class="hidden space-y-8">
+      
+      <!-- Top Tale of the Tape Banner -->
+      <div class="glass p-6 rounded-2xl">
+        <div class="grid grid-cols-11 items-center text-center">
+          <!-- Player A -->
+          <div class="col-span-5 text-left">
+            <span id="compPosA" class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MF</span>
+            <h2 id="compNameA" class="text-2xl sm:text-3xl font-black text-emerald-400 mt-1">Player 1</h2>
+            <p id="compTeamA" class="text-xs sm:text-sm text-slate-400">Team • Minutes</p>
+            <div id="compArchA" class="text-xs font-semibold text-slate-300 mt-1">Archetype</div>
+          </div>
+
+          <!-- VS Badge -->
+          <div class="col-span-1 flex flex-col items-center justify-center">
+            <span class="text-sm font-black text-slate-500 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">VS</span>
+          </div>
+
+          <!-- Player B -->
+          <div class="col-span-5 text-right">
+            <span id="compPosB" class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">MF</span>
+            <h2 id="compNameB" class="text-2xl sm:text-3xl font-black text-cyan-400 mt-1">Player 2</h2>
+            <p id="compTeamB" class="text-xs sm:text-sm text-slate-400">Team • Minutes</p>
+            <div id="compArchB" class="text-xs font-semibold text-slate-300 mt-1">Archetype</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Dual Radar Overlay -->
+        <div class="lg:col-span-6 glass p-6 rounded-2xl flex flex-col items-center">
+          <div class="w-full flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-white">Percentile Overlay Radar</h3>
+            <div class="flex items-center gap-4 text-xs font-semibold">
+              <span class="text-emerald-400 flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Player 1</span>
+              <span class="text-cyan-400 flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Player 2</span>
+            </div>
+          </div>
+          <div class="w-full max-w-[420px] my-auto">
+            <canvas id="compareRadarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- "Who Fits Your Team Better?" Role Breakdown -->
+        <div class="lg:col-span-6 glass p-6 rounded-2xl space-y-6">
+          <div class="border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+              <span>🧠</span> Tactical Role Breakdown
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Direct index comparison (Higher bar denotes dominance in phase)</p>
+          </div>
+
+          <div id="headToHeadBars" class="space-y-4"></div>
+
+          <!-- Tale of the Tape Stat Table -->
+          <div class="pt-4 border-t border-slate-800">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tale of the Tape (Per 90 Metrics)</div>
+            <div id="taleOfTapeRows" class="space-y-2 text-xs"></div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </main>
 
   <script>
-    let radarChartInstance = null;
+    let currentMode = 'single';
+    let singleRadarInstance = null;
+    let compareRadarInstance = null;
 
-    async function handleSearch(q) {
-      const resultsDiv = document.getElementById('searchResults');
+    let activePlayerA = null;
+    let activePlayerB = null;
+
+    function setMode(mode) {
+      currentMode = mode;
+      const singleDash = document.getElementById('singleDashboard');
+      const compareDash = document.getElementById('compareDashboard');
+      const singleSearch = document.getElementById('singleSearchContainer');
+      const compareSearch = document.getElementById('compareSearchContainer');
+
+      const singleBtn = document.getElementById('singleModeBtn');
+      const compareBtn = document.getElementById('compareModeBtn');
+
+      if (mode === 'single') {
+        singleDash.classList.remove('hidden');
+        compareDash.classList.add('hidden');
+        singleSearch.classList.remove('hidden');
+        compareSearch.classList.add('hidden');
+
+        singleBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
+        compareBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition";
+      } else {
+        singleDash.classList.add('hidden');
+        compareDash.classList.remove('hidden');
+        singleSearch.classList.add('hidden');
+        compareSearch.classList.remove('hidden');
+
+        compareBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
+        singleBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition";
+
+        if (!activePlayerB) {
+          // Default Player B if not set
+          fetchSimilarOrTwin(activePlayerA ? activePlayerA.id : 1);
+        } else {
+          renderComparison();
+        }
+      }
+    }
+
+    async function handleSearch(q, target) {
+      const dropId = target === 'single' ? 'searchResults' : (target === 'playerA' ? 'resultsPlayerA' : 'resultsPlayerB');
+      const resultsDiv = document.getElementById(dropId);
+
       if (!q || q.length < 2) {
         resultsDiv.classList.add('hidden');
         return;
@@ -158,47 +261,66 @@
         resultsDiv.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">No players found</div>`;
       } else {
         resultsDiv.innerHTML = players.slice(0, 8).map(p => `
-          <div onclick="selectPlayer(${p.id})" class="px-4 py-3 hover:bg-slate-800/80 cursor-pointer flex justify-between items-center border-b border-slate-800/40 last:border-0">
+          <div onclick="selectSearchMatch(${p.id}, '${target}')" class="px-4 py-2.5 hover:bg-slate-800/80 cursor-pointer flex justify-between items-center border-b border-slate-800/40 last:border-0">
             <div>
-              <div class="font-medium text-sm text-white">${p.name}</div>
-              <div class="text-xs text-slate-400">${p.team} • ${p.position}</div>
+              <div class="font-medium text-xs text-white">${p.name}</div>
+              <div class="text-[11px] text-slate-400">${p.team} • ${p.position}</div>
             </div>
-            <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">${p.minutes} mins</span>
+            <span class="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">${p.minutes}m</span>
           </div>
         `).join('');
       }
       resultsDiv.classList.remove('hidden');
     }
 
-    async function selectPlayer(id) {
-      document.getElementById('searchResults').classList.add('hidden');
-      document.getElementById('searchInput').value = '';
-      document.getElementById('emptyState').classList.add('hidden');
-      document.getElementById('dashboard').classList.remove('hidden');
+    async function selectSearchMatch(id, target) {
+      if (target === 'single') {
+        document.getElementById('searchResults').classList.add('hidden');
+        document.getElementById('searchInput').value = '';
+        await loadSinglePlayer(id);
+      } else if (target === 'playerA') {
+        document.getElementById('resultsPlayerA').classList.add('hidden');
+        const res = await fetch(`/api/scout/player/${id}`);
+        activePlayerA = await res.json();
+        document.getElementById('searchPlayerA').value = activePlayerA.name;
+        renderComparison();
+      } else if (target === 'playerB') {
+        document.getElementById('resultsPlayerB').classList.add('hidden');
+        const res = await fetch(`/api/scout/player/${id}`);
+        activePlayerB = await res.json();
+        document.getElementById('searchPlayerB').value = activePlayerB.name;
+        renderComparison();
+      }
+    }
 
+    async function loadSinglePlayer(id) {
       const [profileRes, simRes] = await Promise.all([
         fetch(`/api/scout/player/${id}`),
         fetch(`/api/scout/player/${id}/similar?top_k=5`)
       ]);
-
-      const profile = await profileRes.json();
+      activePlayerA = await profileRes.json();
       const similars = await simRes.json();
 
-      renderProfile(profile);
+      renderSingleProfile(activePlayerA);
       renderSimilars(similars);
+
+      // Pre-set candidate B for seamless compare mode
+      if (similars && similars.length > 0) {
+        const bRes = await fetch(`/api/scout/player/${similars[0].id}`);
+        activePlayerB = await bRes.json();
+      }
     }
 
-    function renderProfile(profile) {
+    function renderSingleProfile(profile) {
       document.getElementById('playerName').innerText = profile.name;
       document.getElementById('playerMeta').innerText = `${profile.team} • ${profile.minutes.toLocaleString()} Minutes`;
       document.getElementById('playerPosBadge').innerText = profile.position;
 
-      // Radar metrics
       const labels = Object.keys(profile.stats).map(k => k.replace('_p90', '').replace('_', ' ').toUpperCase());
       const percentiles = Object.values(profile.stats).map(s => s.percentile);
-      renderRadar(labels, percentiles);
 
-      // Stat Tiles
+      renderSingleRadar(labels, percentiles);
+
       const tilesContainer = document.getElementById('statTiles');
       tilesContainer.innerHTML = Object.entries(profile.stats).map(([k, v]) => `
         <div class="glass p-3 rounded-xl">
@@ -208,57 +330,52 @@
         </div>
       `).join('');
 
-      // Scouting Report
-      if (profile.report) {
-        const report = profile.report;
-        document.getElementById('playerArchetype').innerText = report.archetype || "Central Profile";
+      const report = profile.report;
+      document.getElementById('playerArchetype').innerText = report.archetype || "Profile";
 
-        const barsContainer = document.getElementById('categoryBars');
-        barsContainer.innerHTML = Object.entries(report.ratings || {}).map(([category, score]) => `
-          <div>
-            <div class="flex justify-between text-xs font-medium mb-1">
-              <span class="text-slate-300 font-semibold tracking-wide">${category}</span>
-              <span class="text-emerald-400 font-bold">${score}</span>
-            </div>
-            <div class="w-full bg-slate-800/90 h-2 rounded-full overflow-hidden">
-              <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: ${score}%"></div>
-            </div>
+      const barsContainer = document.getElementById('categoryBars');
+      barsContainer.innerHTML = Object.entries(report.ratings || {}).map(([category, score]) => `
+        <div>
+          <div class="flex justify-between text-xs font-medium mb-1">
+            <span class="text-slate-300 font-semibold tracking-wide">${category}</span>
+            <span class="text-emerald-400 font-bold">${score}</span>
           </div>
-        `).join('');
+          <div class="w-full bg-slate-800/90 h-2 rounded-full overflow-hidden">
+            <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full" style="width: ${score}%"></div>
+          </div>
+        </div>
+      `).join('');
 
-        document.getElementById('strengthsList').innerHTML = (report.strengths || []).map(s => `
-          <li class="flex items-center gap-2">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
-            <span>${s}</span>
-          </li>
-        `).join('');
+      document.getElementById('strengthsList').innerHTML = (report.strengths || []).map(s => `
+        <li class="flex items-center gap-2">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+          <span>${s}</span>
+        </li>
+      `).join('');
 
-        document.getElementById('weaknessesList').innerHTML = (report.weaknesses || []).map(w => `
-          <li class="flex items-center gap-2">
-            <span class="h-1.5 w-1.5 rounded-full bg-rose-400 flex-shrink-0"></span>
-            <span>${w}</span>
-          </li>
-        `).join('');
-      }
+      document.getElementById('weaknessesList').innerHTML = (report.weaknesses || []).map(w => `
+        <li class="flex items-center gap-2">
+          <span class="h-1.5 w-1.5 rounded-full bg-rose-400 flex-shrink-0"></span>
+          <span>${w}</span>
+        </li>
+      `).join('');
     }
 
-    function renderRadar(labels, data) {
-      const ctx = document.getElementById('radarChart').getContext('2d');
-      if (radarChartInstance) radarChartInstance.destroy();
+    function renderSingleRadar(labels, data) {
+      const ctx = document.getElementById('singleRadarChart').getContext('2d');
+      if (singleRadarInstance) singleRadarInstance.destroy();
 
-      radarChartInstance = new Chart(ctx, {
+      singleRadarInstance = new Chart(ctx, {
         type: 'radar',
         data: {
           labels: labels,
           datasets: [{
-            label: 'Percentile',
             data: data,
             backgroundColor: 'rgba(16, 185, 129, 0.25)',
             borderColor: '#10b981',
             borderWidth: 2,
             pointBackgroundColor: '#10b981',
-            pointBorderColor: '#fff',
-            pointHoverRadius: 5
+            pointBorderColor: '#fff'
           }]
         },
         options: {
@@ -269,10 +386,7 @@
               ticks: { display: false, stepSize: 25 },
               grid: { color: 'rgba(255, 255, 255, 0.08)' },
               angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
-              pointLabels: {
-                color: '#94a3b8',
-                font: { size: 10, weight: '600' }
-              }
+              pointLabels: { color: '#94a3b8', font: { size: 10, weight: '600' } }
             }
           },
           plugins: { legend: { display: false } }
@@ -288,23 +402,172 @@
       }
 
       container.innerHTML = similars.map(p => `
-        <div onclick="selectPlayer(${p.id})" class="p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 cursor-pointer transition">
-          <div class="flex justify-between items-center mb-1">
-            <div>
-              <div class="font-bold text-sm text-white">${p.name}</div>
-              <div class="text-xs text-slate-400">${p.team}</div>
-            </div>
-            <span class="text-sm font-black text-emerald-400">${p.similarity_score}%</span>
+        <div class="p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 transition flex items-center justify-between">
+          <div onclick="loadSinglePlayer(${p.id})" class="cursor-pointer flex-1">
+            <div class="font-bold text-sm text-white">${p.name}</div>
+            <div class="text-xs text-slate-400">${p.team} • <span class="text-emerald-400 font-bold">${p.similarity_score}% match</span></div>
           </div>
-          <div class="w-full bg-slate-700/50 h-1.5 rounded-full overflow-hidden">
-            <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full" style="width: ${p.similarity_score}%"></div>
-          </div>
+          <button onclick="compareWithTwin(${p.id})" class="text-[11px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-2.5 py-1.5 rounded-lg border border-emerald-500/20 font-semibold">
+            ⚔️ Compare
+          </button>
         </div>
       `).join('');
     }
 
+    async function compareWithTwin(twinId) {
+      const res = await fetch(`/api/scout/player/${twinId}`);
+      activePlayerB = await res.json();
+      setMode('compare');
+    }
+
+    function initiateCompareWithCurrent() {
+      setMode('compare');
+    }
+
+    async function fetchSimilarOrTwin(id) {
+      const simRes = await fetch(`/api/scout/player/${id}/similar?top_k=1`);
+      const data = await simRes.json();
+      if (data.length > 0) {
+        const bRes = await fetch(`/api/scout/player/${data[0].id}`);
+        activePlayerB = await bRes.json();
+      }
+      renderComparison();
+    }
+
+    function renderComparison() {
+      if (!activePlayerA || !activePlayerB) return;
+
+      // Update Search Inputs with active names
+      document.getElementById('searchPlayerA').value = activePlayerA.name;
+      document.getElementById('searchPlayerB').value = activePlayerB.name;
+
+      // Banner A
+      document.getElementById('compNameA').innerText = activePlayerA.name;
+      document.getElementById('compTeamA').innerText = `${activePlayerA.team} • ${activePlayerA.minutes.toLocaleString()}m`;
+      document.getElementById('compPosA').innerText = activePlayerA.position;
+      document.getElementById('compArchA').innerText = activePlayerA.report?.archetype || 'Profile';
+
+      // Banner B
+      document.getElementById('compNameB').innerText = activePlayerB.name;
+      document.getElementById('compTeamB').innerText = `${activePlayerB.team} • ${activePlayerB.minutes.toLocaleString()}m`;
+      document.getElementById('compPosB').innerText = activePlayerB.position;
+      document.getElementById('compArchB').innerText = activePlayerB.report?.archetype || 'Profile';
+
+      // Dual Radar Overlay
+      const labels = Object.keys(activePlayerA.stats).map(k => k.replace('_p90', '').replace('_', ' ').toUpperCase());
+      const p1Data = Object.values(activePlayerA.stats).map(s => s.percentile);
+      const p2Data = Object.values(activePlayerB.stats).map(s => s.percentile);
+
+      renderCompareRadar(labels, p1Data, p2Data, activePlayerA.name, activePlayerB.name);
+
+      // Category Role Bars
+      renderHeadToHeadRatings(activePlayerA, activePlayerB);
+
+      // Tale of Tape Table
+      renderTaleOfTape(activePlayerA, activePlayerB);
+    }
+
+    function renderCompareRadar(labels, dataA, dataB, nameA, nameB) {
+      const ctx = document.getElementById('compareRadarChart').getContext('2d');
+      if (compareRadarInstance) compareRadarInstance.destroy();
+
+      compareRadarInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: nameA,
+              data: dataA,
+              backgroundColor: 'rgba(16, 185, 129, 0.25)',
+              borderColor: '#10b981',
+              borderWidth: 2,
+              pointBackgroundColor: '#10b981'
+            },
+            {
+              label: nameB,
+              data: dataB,
+              backgroundColor: 'rgba(6, 182, 212, 0.25)',
+              borderColor: '#06b6d4',
+              borderWidth: 2,
+              pointBackgroundColor: '#06b6d4'
+            }
+          ]
+        },
+        options: {
+          scales: {
+            r: {
+              min: 0,
+              max: 100,
+              ticks: { display: false, stepSize: 25 },
+              grid: { color: 'rgba(255, 255, 255, 0.08)' },
+              angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+              pointLabels: { color: '#94a3b8', font: { size: 10, weight: '600' } }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function renderHeadToHeadRatings(pA, pB) {
+      const container = document.getElementById('headToHeadBars');
+      const ratingsA = pA.report?.ratings || {};
+      const ratingsB = pB.report?.ratings || {};
+
+      const categories = Object.keys(ratingsA);
+
+      container.innerHTML = categories.map(cat => {
+        const scoreA = ratingsA[cat] || 50;
+        const scoreB = ratingsB[cat] || 50;
+
+        const aWins = scoreA >= scoreB;
+
+        return `
+          <div class="glass p-3 rounded-xl">
+            <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-2">
+              <span class="${aWins ? 'text-emerald-400' : 'text-slate-400'}">${pA.name}: ${scoreA}</span>
+              <span class="text-white">${cat}</span>
+              <span class="${!aWins ? 'text-cyan-400' : 'text-slate-400'}">${scoreB} :${pB.name}</span>
+            </div>
+
+            <!-- Player A Bar -->
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-1">
+              <div class="bg-emerald-400 h-full rounded-full" style="width: ${scoreA}%"></div>
+            </div>
+            <!-- Player B Bar -->
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-cyan-400 h-full rounded-full" style="width: ${scoreB}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTaleOfTape(pA, pB) {
+      const container = document.getElementById('taleOfTapeRows');
+      const metrics = Object.keys(pA.stats);
+
+      container.innerHTML = metrics.map(metric => {
+        const valA = pA.stats[metric].raw_value;
+        const valB = pB.stats[metric].raw_value;
+        const label = metric.replace('_p90', '').replace('_', ' ').toUpperCase();
+
+        const aBetter = valA > valB;
+        const tie = valA === valB;
+
+        return `
+          <div class="grid grid-cols-7 items-center p-2 rounded-lg bg-slate-800/30 border border-slate-700/20">
+            <div class="col-span-2 text-left font-bold ${aBetter ? 'text-emerald-400' : 'text-slate-400'}">${valA}</div>
+            <div class="col-span-3 text-center text-[10px] font-semibold text-slate-300">${label}</div>
+            <div class="col-span-2 text-right font-bold ${!aBetter && !tie ? 'text-cyan-400' : 'text-slate-400'}">${valB}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
-      selectPlayer(1);
+      loadSinglePlayer(1);
     });
   </script>
 </body>
