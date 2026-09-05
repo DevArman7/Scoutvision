@@ -9,37 +9,38 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .glass { background: rgba(23, 27, 38, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass { background: rgba(23, 27, 38, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
   </style>
 </head>
 <body class="bg-[#0b0e14] text-slate-100 min-h-screen">
 
-  <!-- Header -->
-  <header class="border-b border-slate-800 bg-[#10141d]/80 backdrop-blur sticky top-0 z-50">
+  <!-- Top Navbar -->
+  <header class="border-b border-slate-800 bg-[#10141d]/90 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-lg">⚽</div>
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-lg shadow-lg shadow-emerald-500/20">⚽</div>
         <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">ScoutVision</span>
       </div>
-      <div class="text-xs text-slate-400 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">Top 5 European Leagues 23/24</div>
+      <div class="text-xs text-slate-400 bg-slate-800/80 px-3.5 py-1.5 rounded-full border border-slate-700">Top 5 European Leagues 23/24</div>
     </div>
   </header>
 
-  <!-- Main Content -->
+  <!-- Main Container -->
   <main class="max-w-7xl mx-auto px-6 py-8">
-    <!-- Search Bar & Filters -->
+    
+    <!-- Search & Filter Controls -->
     <div class="glass p-4 rounded-2xl mb-8 flex flex-col md:flex-row gap-4 items-center">
       <div class="relative flex-1 w-full">
         <input 
           id="searchInput" 
           type="text" 
           placeholder="Search by player name (e.g., Bellingham, Rice, Saka)..."
-          class="w-full bg-[#161b26] border border-slate-700/60 rounded-xl px-4 py-3 pl-11 text-sm focus:outline-none focus:border-emerald-500 transition"
+          class="w-full bg-[#161b26] border border-slate-700/70 rounded-xl px-4 py-3 pl-11 text-sm focus:outline-none focus:border-emerald-500 transition"
           oninput="handleSearch(this.value)"
         />
         <svg class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         
-        <!-- Search Autocomplete Dropdown -->
+        <!-- Search Results Dropdown -->
         <div id="searchResults" class="hidden absolute top-14 left-0 right-0 bg-[#161b26] border border-slate-700 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50"></div>
       </div>
 
@@ -51,83 +52,93 @@
       </div>
     </div>
 
-    <!-- Player Analytics Dashboard -->
-    <div id="dashboard" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <!-- Dashboard Content Area -->
+    <div id="dashboard" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       
-      <!-- Left: Player Profile & Radar Chart -->
+      <!-- LEFT COLUMN: Profile + Radar + Stat Tiles (7 Cols) -->
       <div class="lg:col-span-7 space-y-6">
-        <div class="glass p-6 rounded-2xl relative overflow-hidden">
-          <div class="flex items-start justify-between mb-4">
+        
+        <!-- Player Radar Card -->
+        <div class="glass p-6 rounded-2xl">
+          <div class="flex items-start justify-between">
             <div>
               <span id="playerPosBadge" class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MF</span>
               <h1 id="playerName" class="text-3xl font-extrabold mt-2 text-white">Player Name</h1>
-              <p id="playerMeta" class="text-sm text-slate-400 mt-1">Club • Minutes Played</p>
+              <p id="playerMeta" class="text-sm text-slate-400 mt-1">Club • Minutes</p>
+            </div>
+            <div id="playerArchetype" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 max-w-[220px] text-right">
+              Tactical Archetype
             </div>
           </div>
 
-          <!-- Radar Chart -->
-          <div class="w-full max-w-[440px] mx-auto my-4">
+          <div class="w-full max-w-[420px] mx-auto my-6">
             <canvas id="radarChart"></canvas>
           </div>
         </div>
 
         <!-- Metric Percentile Tiles -->
         <div id="statTiles" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+
       </div>
 
-      <!-- Scouting Dossier Card -->
-<div class="glass p-6 rounded-2xl space-y-6">
-  <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
-    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Scouting Intelligence Report</h3>
-    <span id="playerArchetype" class="text-xs font-semibold px-3 py-1 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">
-      Archetype
-    </span>
-  </div>
-
-  <!-- Composite Progress Bars -->
-  <div id="categoryBars" class="space-y-3"></div>
-
-  <!-- Strengths & Weaknesses Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
-    <div>
-      <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-        <span>🟢</span> Strengths
-      </div>
-      <ul id="strengthsList" class="space-y-1 text-sm text-slate-300"></ul>
-    </div>
-    <div>
-      <div class="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-        <span>🔴</span> Weaknesses
-      </div>
-      <ul id="weaknessesList" class="space-y-1 text-sm text-slate-300"></ul>
-    </div>
-  </div>
-</div>
-
-      <!-- Right: Similar Profiles ("Moneyball" Matches) -->
+      <!-- RIGHT COLUMN: Scouting Dossier & Statistical Twins (5 Cols) -->
       <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Scouting Intelligence Dossier -->
+        <div class="glass p-6 rounded-2xl space-y-6">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="text-base font-bold text-white tracking-wide flex items-center gap-2">
+              <span>📋</span> Scouting Intelligence
+            </h2>
+          </div>
+
+          <!-- Category Progress Bars -->
+          <div class="space-y-3.5">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Attribute Ratings</div>
+            <div id="categoryBars" class="space-y-3"></div>
+          </div>
+
+          <!-- Strengths and Weaknesses -->
+          <div class="pt-4 border-t border-slate-800 space-y-4">
+            <div>
+              <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>🟢</span> Standout Strengths
+              </div>
+              <ul id="strengthsList" class="space-y-1.5 text-sm text-slate-300"></ul>
+            </div>
+
+            <div>
+              <div class="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <span>🔴</span> Tactical Limitations
+              </div>
+              <ul id="weaknessesList" class="space-y-1.5 text-sm text-slate-300"></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistical Twins ("Moneyball" Matches) -->
         <div class="glass p-6 rounded-2xl">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
               <span>🎯</span> Statistical Twins
             </h2>
             <span class="text-xs text-slate-400">Cosine Similarity</span>
           </div>
 
-          <div id="similarList" class="space-y-4">
-            <!-- Dynamic cards injected here -->
-          </div>
+          <div id="similarList" class="space-y-3"></div>
         </div>
+
       </div>
 
     </div>
 
-    <!-- Empty State / Welcome Screen -->
-    <div id="emptyState" class="text-center py-24">
+    <!-- Empty State / Fallback -->
+    <div id="emptyState" class="hidden text-center py-24">
       <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-800/60 border border-slate-700 flex items-center justify-center text-2xl">🔍</div>
       <h3 class="text-lg font-semibold text-white">Search any player to launch radar</h3>
       <p class="text-sm text-slate-400 mt-1">Try searching for "Vinicius", "Rodri", or "Saliba"</p>
     </div>
+
   </main>
 
   <script>
@@ -165,7 +176,6 @@
       document.getElementById('emptyState').classList.add('hidden');
       document.getElementById('dashboard').classList.remove('hidden');
 
-      // Fetch Profile & Similars
       const [profileRes, simRes] = await Promise.all([
         fetch(`/api/scout/player/${id}`),
         fetch(`/api/scout/player/${id}/similar?top_k=5`)
@@ -183,22 +193,53 @@
       document.getElementById('playerMeta').innerText = `${profile.team} • ${profile.minutes.toLocaleString()} Minutes`;
       document.getElementById('playerPosBadge').innerText = profile.position;
 
-      // Extract Radar Metrics
+      // Radar metrics
       const labels = Object.keys(profile.stats).map(k => k.replace('_p90', '').replace('_', ' ').toUpperCase());
       const percentiles = Object.values(profile.stats).map(s => s.percentile);
-      const rawValues = Object.values(profile.stats).map(s => s.raw_value);
-
       renderRadar(labels, percentiles);
 
-      // Render Stat Tiles
+      // Stat Tiles
       const tilesContainer = document.getElementById('statTiles');
       tilesContainer.innerHTML = Object.entries(profile.stats).map(([k, v]) => `
         <div class="glass p-3 rounded-xl">
-          <div class="text-[11px] uppercase tracking-wider text-slate-400 truncate">${k.replace('_p90', '').replace('_', ' ')}</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-400 truncate">${k.replace('_p90', '').replace('_', ' ')}</div>
           <div class="text-lg font-bold text-white mt-1">${v.raw_value}</div>
-          <div class="text-[11px] font-semibold text-emerald-400">${v.percentile}th percentile</div>
+          <div class="text-[11px] font-semibold text-emerald-400">${v.percentile}th pct</div>
         </div>
       `).join('');
+
+      // Scouting Report
+      if (profile.report) {
+        const report = profile.report;
+        document.getElementById('playerArchetype').innerText = report.archetype || "Central Profile";
+
+        const barsContainer = document.getElementById('categoryBars');
+        barsContainer.innerHTML = Object.entries(report.ratings || {}).map(([category, score]) => `
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span class="text-slate-300 font-semibold tracking-wide">${category}</span>
+              <span class="text-emerald-400 font-bold">${score}</span>
+            </div>
+            <div class="w-full bg-slate-800/90 h-2 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: ${score}%"></div>
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('strengthsList').innerHTML = (report.strengths || []).map(s => `
+          <li class="flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
+            <span>${s}</span>
+          </li>
+        `).join('');
+
+        document.getElementById('weaknessesList').innerHTML = (report.weaknesses || []).map(w => `
+          <li class="flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full bg-rose-400 flex-shrink-0"></span>
+            <span>${w}</span>
+          </li>
+        `).join('');
+      }
     }
 
     function renderRadar(labels, data) {
@@ -210,14 +251,14 @@
         data: {
           labels: labels,
           datasets: [{
-            label: 'Position Percentile',
+            label: 'Percentile',
             data: data,
             backgroundColor: 'rgba(16, 185, 129, 0.25)',
             borderColor: '#10b981',
             borderWidth: 2,
             pointBackgroundColor: '#10b981',
             pointBorderColor: '#fff',
-            pointHoverRadius: 6
+            pointHoverRadius: 5
           }]
         },
         options: {
@@ -234,28 +275,26 @@
               }
             }
           },
-          plugins: {
-            legend: { display: false }
-          }
+          plugins: { legend: { display: false } }
         }
       });
     }
 
     function renderSimilars(similars) {
       const container = document.getElementById('similarList');
-      if (!similars.length) {
+      if (!similars || !similars.length) {
         container.innerHTML = `<div class="text-xs text-slate-400">No close matches found.</div>`;
         return;
       }
 
       container.innerHTML = similars.map(p => `
-        <div onclick="selectPlayer(${p.id})" class="p-3.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 cursor-pointer transition">
-          <div class="flex justify-between items-center mb-1.5">
+        <div onclick="selectPlayer(${p.id})" class="p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 cursor-pointer transition">
+          <div class="flex justify-between items-center mb-1">
             <div>
               <div class="font-bold text-sm text-white">${p.name}</div>
               <div class="text-xs text-slate-400">${p.team}</div>
             </div>
-            <span class="text-sm font-extrabold text-emerald-400">${p.similarity_score}%</span>
+            <span class="text-sm font-black text-emerald-400">${p.similarity_score}%</span>
           </div>
           <div class="w-full bg-slate-700/50 h-1.5 rounded-full overflow-hidden">
             <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full" style="width: ${p.similarity_score}%"></div>
@@ -264,7 +303,6 @@
       `).join('');
     }
 
-    // Default loader
     window.addEventListener('DOMContentLoaded', () => {
       selectPlayer(1);
     });
