@@ -261,7 +261,9 @@
     let activePlayerB = null;
     let targetReplacementPlayer = null;
 
-    // Helper: Clean string for URL queries
+    // Cache to prevent duplicate API queries
+    const faceCache = {};
+
     function slugify(text) {
       return text
         .toString()
@@ -272,27 +274,47 @@
         .replace(/\s+/g, '-');
     }
 
-    function getPlayerFaceUrl(name) {
-      const slug = slugify(name);
-      return `https://www.thesportsdb.com/images/media/player/render/${slug}.png`;
+    async function loadPlayerPortrait(name, imgElement) {
+      if (!imgElement) return;
+      imgElement.alt = name;
+
+      if (faceCache[name]) {
+        imgElement.src = faceCache[name];
+        return;
+      }
+
+      // Default temporary fallback
+      imgElement.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10b981&color=0d1117&bold=true&size=128`;
+
+      try {
+        const cleanName = name.trim().replace(/\s+/g, '_');
+        const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanName)}&prop=pageimages&format=json&pithumbsize=300&origin=*`;
+        
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const pages = data.query?.pages;
+
+        if (pages) {
+          const pageId = Object.keys(pages)[0];
+          const thumb = pages[pageId]?.thumbnail?.source;
+
+          if (thumb) {
+            faceCache[name] = thumb;
+            imgElement.src = thumb;
+            return;
+          }
+        }
+
+        // Secondary attempt: TheSportsDB
+        const sportsDbUrl = `https://www.thesportsdb.com/images/media/player/render/${slugify(name)}.png`;
+        imgElement.src = sportsDbUrl;
+      } catch (err) {
+        imgElement.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10b981&color=0d1117&bold=true&size=128`;
+      }
     }
 
     function handleFaceFallback(img) {
       const name = img.alt || "Player";
-
-      if (!img.dataset.stage) {
-        img.dataset.stage = "1";
-        img.src = `https://www.thesportsdb.com/images/media/player/cutout/${encodeURIComponent(name.trim())}.png`;
-        return;
-      }
-
-      if (img.dataset.stage === "1") {
-        img.dataset.stage = "2";
-        img.src = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(name.replace(/ /g, '_'))}.jpg`;
-        return;
-      }
-
-      // Safe final fallback: Colored initials badge
       img.onerror = null;
       img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10b981&color=0d1117&bold=true&size=128`;
     }
@@ -424,9 +446,7 @@
       document.getElementById('playerMinVal').innerText = p.minutes.toLocaleString();
 
       const faceImg = document.getElementById('playerFaceImg');
-      faceImg.alt = p.name;
-      delete faceImg.dataset.stage;
-      faceImg.src = getPlayerFaceUrl(p.name);
+      loadPlayerPortrait(p.name, faceImg);
 
       document.getElementById('clubCrestImg').src = p.club_logo;
       document.getElementById('countryFlagImg').src = getFlagUrl(p.country_code);
@@ -506,8 +526,9 @@
           <div onclick="loadSinglePlayer(${p.id})" class="flex items-center gap-3 cursor-pointer flex-1">
             <span class="text-xs font-bold text-slate-500 w-4">${idx + 1}</span>
             <img 
+              id="twin-face-${p.id}"
               referrerpolicy="no-referrer"
-              src="${getPlayerFaceUrl(p.name)}" 
+              src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=0284c7&color=fff&bold=true" 
               alt="${p.name}" 
               class="w-8 h-8 rounded-lg object-cover bg-slate-800 border border-slate-700/50" 
               onerror="handleFaceFallback(this)"
@@ -531,6 +552,11 @@
           </div>
         </div>
       `).join('');
+
+      similars.forEach(p => {
+        const twinImg = document.getElementById(`twin-face-${p.id}`);
+        if (twinImg) loadPlayerPortrait(p.name, twinImg);
+      });
     }
 
     async function compareWithTwin(twinId) {
@@ -549,17 +575,11 @@
 
       document.getElementById('compNameA').innerText = activePlayerA.name;
       document.getElementById('compTeamA').innerText = activePlayerA.team;
-      const faceA = document.getElementById('compFaceA');
-      faceA.alt = activePlayerA.name;
-      delete faceA.dataset.stage;
-      faceA.src = getPlayerFaceUrl(activePlayerA.name);
+      loadPlayerPortrait(activePlayerA.name, document.getElementById('compFaceA'));
 
       document.getElementById('compNameB').innerText = activePlayerB.name;
       document.getElementById('compTeamB').innerText = activePlayerB.team;
-      const faceB = document.getElementById('compFaceB');
-      faceB.alt = activePlayerB.name;
-      delete faceB.dataset.stage;
-      faceB.src = getPlayerFaceUrl(activePlayerB.name);
+      loadPlayerPortrait(activePlayerB.name, document.getElementById('compFaceB'));
 
       const labels = Object.keys(activePlayerA.stats).map(k => k.replace('_p90', '').replace('_', ' ').toUpperCase());
       const p1Data = Object.values(activePlayerA.stats).map(s => s.percentile);
@@ -617,11 +637,19 @@
       const candidates = await res.json();
       document.getElementById('targetsCount').innerText = `${candidates.length} Targets`;
 
-      document.getElementById('replacementCardsList').innerHTML = candidates.map((p, idx) => `
+      const container = document.getElementById('replacementCardsList');
+      container.innerHTML = candidates.map((p, idx) => `
         <div class="glass-card p-3 rounded-xl flex items-center justify-between hover:border-emerald-500/40 transition">
           <div class="flex items-center gap-3">
             <span class="text-sm font-bold text-slate-500">#${idx + 1}</span>
-            <img src="${p.club_logo}" class="w-6 h-6 object-contain">
+            <img 
+              id="rep-face-${p.id}"
+              referrerpolicy="no-referrer"
+              src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=10b981&color=0d1117&bold=true" 
+              alt="${p.name}" 
+              class="w-8 h-8 rounded-lg object-cover bg-slate-800 border border-slate-700/50" 
+              onerror="handleFaceFallback(this)"
+            />
             <div>
               <div class="font-bold text-xs text-white flex items-center gap-1.5">
                 ${p.name}
@@ -636,6 +664,11 @@
           </div>
         </div>
       `).join('');
+
+      candidates.forEach(p => {
+        const repImg = document.getElementById(`rep-face-${p.id}`);
+        if (repImg) loadPlayerPortrait(p.name, repImg);
+      });
     }
 
     window.addEventListener('DOMContentLoaded', () => {
