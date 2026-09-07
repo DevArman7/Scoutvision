@@ -3,282 +3,256 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ScoutVision | Football Intelligence & Recruitment</title>
+  <title>ScoutVision | Football Intelligence</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .glass { background: rgba(23, 27, 38, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0d1117; }
+    .glass-card { background: rgba(18, 24, 38, 0.85); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.07); }
+    .hero-gradient { background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.05) 100%); }
     input[type=range] { accent-color: #10b981; }
   </style>
 </head>
-<body class="bg-[#0b0e14] text-slate-100 min-h-screen">
+<body class="text-slate-100 min-h-screen">
 
   <!-- Header -->
-  <header class="border-b border-slate-800 bg-[#10141d]/90 backdrop-blur sticky top-0 z-50">
+  <header class="border-b border-slate-800/80 bg-[#0f141c]/90 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3 cursor-pointer" onclick="setMode('single')">
-        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-lg shadow-lg shadow-emerald-500/20">⚽</div>
-        <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">ScoutVision</span>
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-lg shadow-md shadow-emerald-500/20">⚽</div>
+        <div>
+          <span class="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">ScoutVision</span>
+          <span class="block text-[9px] uppercase tracking-widest text-emerald-400 font-semibold -mt-1">Data. Players. Future.</span>
+        </div>
       </div>
       
-      <!-- 3-Way Mode Switcher -->
-      <div class="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl">
-        <button id="singleModeBtn" onclick="setMode('single')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition">Single Scout</button>
-        <button id="compareModeBtn" onclick="setMode('compare')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">⚔️ Comparison</button>
-        <button id="replaceModeBtn" onclick="setMode('replace')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🔎 Find Replacement</button>
+      <!-- Nav Modes -->
+      <div class="flex items-center bg-slate-900/90 border border-slate-800 p-1 rounded-xl">
+        <button id="singleModeBtn" onclick="setMode('single')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition">Player Profile</button>
+        <button id="compareModeBtn" onclick="setMode('compare')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">⚔️ Comparison</button>
+        <button id="replaceModeBtn" onclick="setMode('replace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🔎 Find Replacement</button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-6 py-8">
+  <main class="max-w-7xl mx-auto px-6 py-6">
     
-    <!-- 1. SINGLE SEARCH BAR -->
-    <div id="singleSearchContainer" class="glass p-4 rounded-2xl mb-8 flex flex-col md:flex-row gap-4 items-center">
-      <div class="relative flex-1 w-full">
+    <!-- Top Search Bar -->
+    <div id="singleSearchContainer" class="glass-card p-3.5 rounded-2xl mb-6">
+      <div class="relative w-full">
         <input 
           id="searchInput" 
           type="text" 
-          placeholder="Search player to scout (e.g., De Bruyne, Bellingham, Rodri)..."
-          class="w-full bg-[#161b26] border border-slate-700/70 rounded-xl px-4 py-3 pl-11 text-sm focus:outline-none focus:border-emerald-500 transition"
+          placeholder="Search by player name (e.g., Goretzka, Bellingham, Lamine Yamal, Saka)..."
+          class="w-full bg-[#141a24] border border-slate-700/60 rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:border-emerald-500 transition placeholder-slate-500"
           oninput="handleSearch(this.value, 'single')"
         />
-        <svg class="w-5 h-5 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        <div id="searchResults" class="hidden absolute top-14 left-0 right-0 bg-[#161b26] border border-slate-700 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50"></div>
+        <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <div id="searchResults" class="hidden absolute top-12 left-0 right-0 bg-[#161d2b] border border-slate-700 rounded-xl shadow-2xl max-h-64 overflow-y-auto z-50"></div>
       </div>
     </div>
 
-    <!-- 2. COMPARISON SELECTORS BAR -->
-    <div id="compareSearchContainer" class="hidden glass p-5 rounded-2xl mb-8">
-      <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">Head-to-Head Scout Matchup</div>
+    <!-- COMPARISON SELECTORS BAR -->
+    <div id="compareSearchContainer" class="hidden glass-card p-4 rounded-2xl mb-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="relative">
-          <label class="text-[11px] font-semibold text-emerald-400 mb-1 block uppercase">Player 1</label>
-          <input 
-            id="searchPlayerA" 
-            type="text" 
-            placeholder="Search Player 1..."
-            class="w-full bg-[#161b26] border border-emerald-500/40 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-400 transition"
-            oninput="handleSearch(this.value, 'playerA')"
-          />
-          <div id="resultsPlayerA" class="hidden absolute top-16 left-0 right-0 bg-[#161b26] border border-slate-700 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50"></div>
+          <label class="text-[10px] font-bold text-emerald-400 mb-1 block uppercase">Player 1</label>
+          <input id="searchPlayerA" type="text" placeholder="Search Player 1..." class="w-full bg-[#141a24] border border-emerald-500/40 rounded-xl px-3 py-2 text-xs focus:outline-none" oninput="handleSearch(this.value, 'playerA')"/>
+          <div id="resultsPlayerA" class="hidden absolute top-14 left-0 right-0 bg-[#161d2b] border border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto z-50"></div>
         </div>
         <div class="relative">
-          <label class="text-[11px] font-semibold text-cyan-400 mb-1 block uppercase">Player 2</label>
-          <input 
-            id="searchPlayerB" 
-            type="text" 
-            placeholder="Search Player 2..."
-            class="w-full bg-[#161b26] border border-cyan-500/40 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-400 transition"
-            oninput="handleSearch(this.value, 'playerB')"
-          />
-          <div id="resultsPlayerB" class="hidden absolute top-16 left-0 right-0 bg-[#161b26] border border-slate-700 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50"></div>
+          <label class="text-[10px] font-bold text-cyan-400 mb-1 block uppercase">Player 2</label>
+          <input id="searchPlayerB" type="text" placeholder="Search Player 2..." class="w-full bg-[#141a24] border border-cyan-500/40 rounded-xl px-3 py-2 text-xs focus:outline-none" oninput="handleSearch(this.value, 'playerB')"/>
+          <div id="resultsPlayerB" class="hidden absolute top-14 left-0 right-0 bg-[#161d2b] border border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto z-50"></div>
         </div>
       </div>
     </div>
 
-    <!-- 3. REPLACEMENT FILTER CONTROLS BAR -->
-    <div id="replaceSearchContainer" class="hidden glass p-6 rounded-2xl mb-8 space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-base font-bold text-white flex items-center gap-2"><span>🎯</span> Realistic Recruitment Targets</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Filter by squad criteria, financial constraints, and statistical identity</p>
-        </div>
-        <span id="targetPlayerBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Target: Kevin De Bruyne</span>
+    <!-- REPLACEMENT FILTERS BAR -->
+    <div id="replaceSearchContainer" class="hidden glass-card p-5 rounded-2xl mb-6 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>🎯</span> Target Recruitment Parameters</h3>
+        <span id="targetPlayerBadge" class="text-xs font-semibold text-emerald-400">Target: Selected</span>
       </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 pt-2">
-        <!-- Max Age -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1">
-            <span>Max Age</span>
-            <span id="ageLabel" class="text-emerald-400 font-bold">26 yrs</span>
-          </div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">Max Age</span><span id="ageLabel" class="text-emerald-400 font-bold">26 yrs</span></div>
           <input id="maxAgeInput" type="range" min="18" max="34" value="26" class="w-full" oninput="updateReplacementFilters()">
         </div>
-
-        <!-- Max Budget (€M) -->
         <div>
-          <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1">
-            <span>Budget Cap</span>
-            <span id="budgetLabel" class="text-emerald-400 font-bold">€50M</span>
-          </div>
+          <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">Budget Cap</span><span id="budgetLabel" class="text-emerald-400 font-bold">€50M</span></div>
           <input id="budgetInput" type="range" min="10" max="150" step="5" value="50" class="w-full" oninput="updateReplacementFilters()">
         </div>
-
-        <!-- Min Similarity (%) -->
         <div>
-          <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1">
-            <span>Min Similarity</span>
-            <span id="simLabel" class="text-emerald-400 font-bold">80%</span>
-          </div>
-          <input id="simInput" type="range" min="60" max="95" step="1" value="80" class="w-full" oninput="updateReplacementFilters()">
+          <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">Min Similarity</span><span id="simLabel" class="text-emerald-400 font-bold">80%</span></div>
+          <input id="simInput" type="range" min="65" max="95" step="1" value="80" class="w-full" oninput="updateReplacementFilters()">
         </div>
-
-        <!-- Search / Change Player -->
         <div class="relative">
-          <label class="text-xs font-semibold text-slate-300 mb-1 block">Player to Replace</label>
-          <input 
-            id="replaceSearchPlayer" 
-            type="text" 
-            placeholder="Change target player..."
-            class="w-full bg-[#161b26] border border-slate-700 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-400 transition"
-            oninput="handleSearch(this.value, 'replaceTarget')"
-          />
-          <div id="resultsReplaceTarget" class="hidden absolute top-14 left-0 right-0 bg-[#161b26] border border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto z-50"></div>
+          <label class="text-[11px] text-slate-400 mb-1 block">Switch Target</label>
+          <input id="replaceSearchPlayer" type="text" placeholder="Search target player..." class="w-full bg-[#141a24] border border-slate-700 rounded-xl px-3 py-1.5 text-xs focus:outline-none" oninput="handleSearch(this.value, 'replaceTarget')"/>
+          <div id="resultsReplaceTarget" class="hidden absolute top-12 left-0 right-0 bg-[#161d2b] border border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto z-50"></div>
         </div>
       </div>
     </div>
 
-    <!-- VIEW 1: SINGLE SCOUT DASHBOARD -->
-    <div id="singleDashboard" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      <div class="lg:col-span-7 space-y-6">
-        <div class="glass p-6 rounded-2xl">
-          <div class="flex items-start justify-between">
-            <div>
-              <span id="playerPosBadge" class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MF</span>
-              <h1 id="playerName" class="text-3xl font-extrabold mt-2 text-white">Player Name</h1>
-              <p id="playerMeta" class="text-sm text-slate-400 mt-1">Club • Minutes</p>
-            </div>
-            <div class="flex flex-col items-end gap-2">
-              <span id="playerArchetype" class="text-xs font-semibold px-3 py-1.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 text-right">Archetype</span>
-              <button onclick="initiateReplacementMode()" class="text-xs bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-3 py-1 rounded-lg transition">🔎 Find Replacement</button>
-            </div>
-          </div>
-          <div class="w-full max-w-[420px] mx-auto my-6">
-            <canvas id="singleRadarChart"></canvas>
-          </div>
-        </div>
-        <div id="statTiles" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
-      </div>
-
-      <div class="lg:col-span-5 space-y-6">
-        <div class="glass p-6 rounded-2xl space-y-6">
-          <div class="border-b border-slate-800 pb-3">
-            <h2 class="text-base font-bold text-white flex items-center gap-2"><span>📋</span> Scouting Intelligence</h2>
-          </div>
-          <div class="space-y-3.5">
-            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Attribute Ratings</div>
-            <div id="categoryBars" class="space-y-3"></div>
-          </div>
-          <div class="pt-4 border-t border-slate-800 space-y-4">
-            <div>
-              <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><span>🟢</span> Standout Strengths</div>
-              <ul id="strengthsList" class="space-y-1.5 text-sm text-slate-300"></ul>
-            </div>
-            <div>
-              <div class="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><span>🔴</span> Tactical Limitations</div>
-              <ul id="weaknessesList" class="space-y-1.5 text-sm text-slate-300"></ul>
-            </div>
-          </div>
-        </div>
-
-        <div class="glass p-6 rounded-2xl">
-          <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-            <h2 class="text-base font-bold text-white flex items-center gap-2"><span>🎯</span> Statistical Twins</h2>
-            <span class="text-xs text-slate-400">Cosine Similarity</span>
-          </div>
-          <div id="similarList" class="space-y-3"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- VIEW 2: HEAD-TO-HEAD COMPARISON DASHBOARD -->
-    <div id="compareDashboard" class="hidden space-y-8">
-      <div class="glass p-6 rounded-2xl">
-        <div class="grid grid-cols-11 items-center text-center">
-          <div class="col-span-5 text-left">
-            <span id="compPosA" class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">MF</span>
-            <h2 id="compNameA" class="text-2xl sm:text-3xl font-black text-emerald-400 mt-1">Player 1</h2>
-            <p id="compTeamA" class="text-xs sm:text-sm text-slate-400">Team • Minutes</p>
-            <div id="compArchA" class="text-xs font-semibold text-slate-300 mt-1">Archetype</div>
-          </div>
-          <div class="col-span-1 flex flex-col items-center justify-center">
-            <span class="text-sm font-black text-slate-500 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">VS</span>
-          </div>
-          <div class="col-span-5 text-right">
-            <span id="compPosB" class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">MF</span>
-            <h2 id="compNameB" class="text-2xl sm:text-3xl font-black text-cyan-400 mt-1">Player 2</h2>
-            <p id="compTeamB" class="text-xs sm:text-sm text-slate-400">Team • Minutes</p>
-            <div id="compArchB" class="text-xs font-semibold text-slate-300 mt-1">Archetype</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div class="lg:col-span-6 glass p-6 rounded-2xl flex flex-col items-center">
-          <div class="w-full flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-white">Percentile Overlay Radar</h3>
-            <div class="flex items-center gap-4 text-xs font-semibold">
-              <span class="text-emerald-400 flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Player 1</span>
-              <span class="text-cyan-400 flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Player 2</span>
-            </div>
-          </div>
-          <div class="w-full max-w-[420px] my-auto">
-            <canvas id="compareRadarChart"></canvas>
-          </div>
-        </div>
-        <div class="lg:col-span-6 glass p-6 rounded-2xl space-y-6">
-          <div class="border-b border-slate-800 pb-3">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2"><span>🧠</span> Tactical Role Breakdown</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Direct index comparison (Higher bar denotes dominance in phase)</p>
-          </div>
-          <div id="headToHeadBars" class="space-y-4"></div>
-          <div class="pt-4 border-t border-slate-800">
-            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tale of the Tape (Per 90 Metrics)</div>
-            <div id="taleOfTapeRows" class="space-y-2 text-xs"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- VIEW 3: FIND REPLACEMENT DASHBOARD -->
-    <div id="replaceDashboard" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <!-- VIEW 1: PLAYER PROFILE HERO (Matches your screenshot!) -->
+    <div id="singleDashboard" class="space-y-6">
       
-      <!-- Target Player Baseline Card (4 cols) -->
-      <div class="lg:col-span-4 space-y-6">
-        <div class="glass p-6 rounded-2xl space-y-4">
-          <div class="text-xs font-bold text-rose-400 uppercase tracking-wider">Departing / Injured Player</div>
-          <div>
-            <h3 id="repTargetName" class="text-2xl font-black text-white">Kevin De Bruyne</h3>
-            <p id="repTargetMeta" class="text-xs text-slate-400 mt-0.5">Manchester City • 32 yrs</p>
+      <!-- HERO BANNER CARD -->
+      <div class="glass-card hero-gradient p-6 rounded-3xl border border-slate-700/50 relative overflow-hidden">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+          
+          <!-- Left: Face Photo & Primary Info -->
+          <div class="flex items-center gap-5">
+            <div class="relative">
+              <img 
+                id="playerFaceImg" 
+                src="https://images.fotmob.com/image_resources/playerimages/664500.png" 
+                alt="Player Face" 
+                class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-emerald-500/30 bg-[#161d2b] shadow-xl"
+                onerror="handleFaceFallback(this)"
+              />
+              <img id="countryFlagImg" src="https://flagcdn.com/28x21/de.png" alt="Country" class="absolute -bottom-2 -right-2 w-7 h-5 rounded shadow-md border border-slate-700">
+            </div>
+
+            <div>
+              <div class="flex items-center gap-2">
+                <span id="playerPosBadge" class="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">MF</span>
+                <span id="playerArchetype" class="text-[11px] font-semibold text-slate-300 bg-slate-800/80 px-2.5 py-0.5 rounded-full border border-slate-700">Central Midfielder</span>
+              </div>
+              <h1 id="playerName" class="text-3xl sm:text-4xl font-black text-white mt-1">Leon Goretzka</h1>
+              
+              <!-- Club Crest + Club Name -->
+              <div class="flex items-center gap-2 mt-1.5 text-slate-300 text-sm">
+                <img id="clubCrestImg" src="https://images.fotmob.com/image_resources/logo/teamlogo/9823.png" alt="Club Crest" class="w-5 h-5 object-contain">
+                <span id="playerTeamName" class="font-bold">Bayern Munich</span>
+                <span class="text-slate-500">•</span>
+                <span id="playerLeague" class="text-slate-400 text-xs">Top 5 European</span>
+              </div>
+            </div>
           </div>
 
-          <div class="p-4 rounded-xl bg-slate-800/40 border border-slate-700/50 space-y-2">
-            <div class="flex justify-between text-xs">
-              <span class="text-slate-400">Estimated Market Value</span>
-              <span id="repTargetVal" class="font-bold text-white">€65.0M</span>
+          <!-- Right: Bio Stat Grid -->
+          <div class="grid grid-cols-4 gap-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800 text-center w-full md:w-auto">
+            <div class="px-3">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Age</div>
+              <div id="playerAgeVal" class="text-lg font-black text-white mt-0.5">29</div>
             </div>
-            <div class="flex justify-between text-xs">
-              <span class="text-slate-400">Tactical Archetype</span>
-              <span id="repTargetArch" class="font-bold text-teal-400">Advanced Playmaker</span>
+            <div class="px-3 border-l border-slate-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Market Value</div>
+              <div id="playerValVal" class="text-lg font-black text-emerald-400 mt-0.5">€35M</div>
+            </div>
+            <div class="px-3 border-l border-slate-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Minutes</div>
+              <div id="playerMinVal" class="text-lg font-black text-white mt-0.5">2,241</div>
+            </div>
+            <div class="px-3 border-l border-slate-800">
+              <div class="text-[10px] uppercase font-bold text-slate-400">Actions</div>
+              <button onclick="initiateReplacementMode()" class="mt-1 text-[11px] bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-2.5 py-1 rounded-md transition">Replace</button>
             </div>
           </div>
 
-          <div class="pt-2">
-            <div class="text-xs font-semibold text-slate-400 mb-2">Key Profile Traits to Replace</div>
-            <ul id="repTargetStrengths" class="space-y-1 text-xs text-slate-300"></ul>
+        </div>
+      </div>
+
+      <!-- MAIN 2-COLUMN SCOUT VIEW -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Center Left: Radar & Key Metrics (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="glass-card p-6 rounded-2xl">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>📊</span> Performance Percentiles</h3>
+              <span class="text-xs text-slate-400">Ranked vs Position</span>
+            </div>
+            <div class="w-full max-w-[390px] mx-auto my-4">
+              <canvas id="singleRadarChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Horizontal Metric Bars (Matches Screenshot) -->
+          <div class="glass-card p-6 rounded-2xl space-y-3.5">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Key Statistics (Per 90)</div>
+            <div id="keyStatsHorizontal" class="space-y-2.5"></div>
+          </div>
+        </div>
+
+        <!-- Center Right: Statistical Twins & Scouting Dossier (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+          
+          <!-- Statistical Twins List with Face Avatars -->
+          <div class="glass-card p-6 rounded-2xl">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>🎯</span> Statistical Twins</h3>
+              <span class="text-xs text-slate-400">Cosine Similarity</span>
+            </div>
+            <div id="similarList" class="space-y-3"></div>
+          </div>
+
+          <!-- Scouting Dossier -->
+          <div class="glass-card p-6 rounded-2xl space-y-5">
+            <div class="border-b border-slate-800 pb-3">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>📋</span> Scouting Intelligence</h3>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><span>🟢</span> Strengths</div>
+              <ul id="strengthsList" class="space-y-1.5 text-xs text-slate-300"></ul>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><span>🔴</span> Weaknesses</div>
+              <ul id="weaknessesList" class="space-y-1.5 text-xs text-slate-300"></ul>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- VIEW 2: HEAD-TO-HEAD DASHBOARD -->
+    <div id="compareDashboard" class="hidden space-y-6">
+      <div class="glass-card p-6 rounded-2xl">
+        <div class="grid grid-cols-11 items-center text-center">
+          <div class="col-span-5 text-left flex items-center gap-4">
+            <img id="compFaceA" src="" class="w-14 h-14 rounded-xl object-cover bg-slate-800 border border-slate-700" onerror="handleFaceFallback(this)">
+            <div>
+              <h2 id="compNameA" class="text-2xl font-black text-emerald-400">Player 1</h2>
+              <p id="compTeamA" class="text-xs text-slate-400">Club</p>
+            </div>
+          </div>
+          <div class="col-span-1 text-center font-black text-slate-500">VS</div>
+          <div class="col-span-5 text-right flex items-center justify-end gap-4">
+            <div>
+              <h2 id="compNameB" class="text-2xl font-black text-cyan-400">Player 2</h2>
+              <p id="compTeamB" class="text-xs text-slate-400">Club</p>
+            </div>
+            <img id="compFaceB" src="" class="w-14 h-14 rounded-xl object-cover bg-slate-800 border border-slate-700" onerror="handleFaceFallback(this)">
           </div>
         </div>
       </div>
 
-      <!-- Ranked Candidates List (8 cols) -->
-      <div class="lg:col-span-8 space-y-4">
-        <div class="glass p-6 rounded-2xl">
-          <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <span>📋</span> Shortlisted Recruitment Targets
-            </h3>
-            <span id="targetsCount" class="text-xs text-emerald-400 font-semibold">0 targets found</span>
-          </div>
-
-          <div id="replacementCardsList" class="space-y-3">
-            <!-- Dynamically populated candidate cards -->
-          </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-6 glass-card p-6 rounded-2xl">
+          <canvas id="compareRadarChart"></canvas>
+        </div>
+        <div class="lg:col-span-6 glass-card p-6 rounded-2xl space-y-4">
+          <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2">Tale of the Tape</h3>
+          <div id="taleOfTapeRows" class="space-y-2 text-xs"></div>
         </div>
       </div>
+    </div>
 
+    <!-- VIEW 3: FIND REPLACEMENT -->
+    <div id="replaceDashboard" class="hidden space-y-6">
+      <div class="glass-card p-6 rounded-2xl">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+          <h3 class="text-base font-bold text-white">Shortlisted Recruitment Targets</h3>
+          <span id="targetsCount" class="text-xs text-emerald-400 font-semibold">Targets Found</span>
+        </div>
+        <div id="replacementCardsList" class="space-y-3"></div>
+      </div>
     </div>
 
   </main>
@@ -287,17 +261,36 @@
     let currentMode = 'single';
     let singleRadarInstance = null;
     let compareRadarInstance = null;
-
     let activePlayerA = null;
     let activePlayerB = null;
     let targetReplacementPlayer = null;
+
+    // Helper: Dynamic Player Headshot with Initials Fallback
+    function getPlayerFaceUrl(name) {
+      // Encode player name for clean Wikipedia/FotMob query fallback
+      return `https://images.fotmob.com/image_resources/playerimages/search?q=${encodeURIComponent(name)}`;
+    }
+
+    function handleFaceFallback(img) {
+      const name = img.alt || "Player";
+      img.onerror = null;
+      img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10b981&color=0d1117&bold=true&rounded=false`;
+    }
+
+    function getFlagUrl(code) {
+      if (!code || code === 'eu') return 'https://flagcdn.com/28x21/eu.png';
+      // Specific mapping for UK nations and exceptions
+      if (code === 'eng') return 'https://flagcdn.com/28x21/gb-eng.png';
+      if (code === 'sct') return 'https://flagcdn.com/28x21/gb-sct.png';
+      if (code === 'wls') return 'https://flagcdn.com/28x21/gb-wls.png';
+      return `https://flagcdn.com/28x21/${code.slice(0,2)}.png`;
+    }
 
     function setMode(mode) {
       currentMode = mode;
       const singleDash = document.getElementById('singleDashboard');
       const compareDash = document.getElementById('compareDashboard');
       const replaceDash = document.getElementById('replaceDashboard');
-
       const singleSearch = document.getElementById('singleSearchContainer');
       const compareSearch = document.getElementById('compareSearchContainer');
       const replaceSearch = document.getElementById('replaceSearchContainer');
@@ -306,26 +299,23 @@
       const compareBtn = document.getElementById('compareModeBtn');
       const replaceBtn = document.getElementById('replaceModeBtn');
 
-      // Reset tabs
       [singleDash, compareDash, replaceDash, singleSearch, compareSearch, replaceSearch].forEach(el => el.classList.add('hidden'));
-      [singleBtn, compareBtn, replaceBtn].forEach(b => b.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition");
+      [singleBtn, compareBtn, replaceBtn].forEach(b => b.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition");
 
       if (mode === 'single') {
         singleDash.classList.remove('hidden');
         singleSearch.classList.remove('hidden');
-        singleBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
+        singleBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
       } else if (mode === 'compare') {
         compareDash.classList.remove('hidden');
         compareSearch.classList.remove('hidden');
-        compareBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
+        compareBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
         renderComparison();
       } else if (mode === 'replace') {
         replaceDash.classList.remove('hidden');
         replaceSearch.classList.remove('hidden');
-        replaceBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
-        if (!targetReplacementPlayer) {
-          targetReplacementPlayer = activePlayerA || { id: 1 };
-        }
+        replaceBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
+        if (!targetReplacementPlayer) targetReplacementPlayer = activePlayerA || { id: 1 };
         loadReplacementDashboard(targetReplacementPlayer.id);
       }
     }
@@ -346,15 +336,18 @@
       const players = await res.json();
 
       if (!players.length) {
-        resultsDiv.innerHTML = `<div class="p-4 text-xs text-slate-400 text-center">No players found</div>`;
+        resultsDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No players found</div>`;
       } else {
         resultsDiv.innerHTML = players.slice(0, 8).map(p => `
-          <div onclick="selectSearchMatch(${p.id}, '${target}')" class="px-4 py-2.5 hover:bg-slate-800/80 cursor-pointer flex justify-between items-center border-b border-slate-800/40 last:border-0">
-            <div>
-              <div class="font-medium text-xs text-white">${p.name}</div>
-              <div class="text-[11px] text-slate-400">${p.team} • ${p.position} • Age ${p.age}</div>
+          <div onclick="selectSearchMatch(${p.id}, '${target}')" class="px-3.5 py-2 hover:bg-slate-800/90 cursor-pointer flex justify-between items-center border-b border-slate-800/40 last:border-0">
+            <div class="flex items-center gap-2.5">
+              <img src="${p.club_logo}" class="w-4 h-4 object-contain">
+              <div>
+                <div class="font-bold text-xs text-white">${p.name}</div>
+                <div class="text-[10px] text-slate-400">${p.team} • ${p.position}</div>
+              </div>
             </div>
-            <span class="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">€${p.estimated_value}M</span>
+            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">€${p.estimated_value}M</span>
           </div>
         `).join('');
       }
@@ -370,17 +363,14 @@
         document.getElementById('resultsPlayerA').classList.add('hidden');
         const res = await fetch(`/api/scout/player/${id}`);
         activePlayerA = await res.json();
-        document.getElementById('searchPlayerA').value = activePlayerA.name;
         renderComparison();
       } else if (target === 'playerB') {
         document.getElementById('resultsPlayerB').classList.add('hidden');
         const res = await fetch(`/api/scout/player/${id}`);
         activePlayerB = await res.json();
-        document.getElementById('searchPlayerB').value = activePlayerB.name;
         renderComparison();
       } else if (target === 'replaceTarget') {
         document.getElementById('resultsReplaceTarget').classList.add('hidden');
-        document.getElementById('replaceSearchPlayer').value = '';
         await loadReplacementDashboard(id);
       }
     }
@@ -403,49 +393,52 @@
       }
     }
 
-    function renderSingleProfile(profile) {
-      document.getElementById('playerName').innerText = profile.name;
-      document.getElementById('playerMeta').innerText = `${profile.team} • ${profile.age} yrs • €${profile.estimated_value}M`;
-      document.getElementById('playerPosBadge').innerText = profile.position;
+    function renderSingleProfile(p) {
+      document.getElementById('playerName').innerText = p.name;
+      document.getElementById('playerTeamName').innerText = p.team;
+      document.getElementById('playerLeague').innerText = p.league;
+      document.getElementById('playerPosBadge').innerText = p.position;
+      document.getElementById('playerArchetype').innerText = p.report?.archetype || 'Central Specialist';
 
-      const labels = Object.keys(profile.stats).map(k => k.replace('_p90', '').replace('_', ' ').toUpperCase());
-      const percentiles = Object.values(profile.stats).map(s => s.percentile);
+      document.getElementById('playerAgeVal').innerText = p.age;
+      document.getElementById('playerValVal').innerText = `€${p.estimated_value}M`;
+      document.getElementById('playerMinVal').innerText = p.minutes.toLocaleString();
+
+      // Set Visuals (Face, Club Crest, Country Flag)
+      const faceImg = document.getElementById('playerFaceImg');
+      faceImg.alt = p.name;
+      faceImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=10b981&color=0d1117&bold=true&size=128`;
+
+      document.getElementById('clubCrestImg').src = p.club_logo;
+      document.getElementById('countryFlagImg').src = getFlagUrl(p.country_code);
+
+      // Radar
+      const labels = Object.keys(p.stats).map(k => k.replace('_p90', '').replace('_', ' ').toUpperCase());
+      const percentiles = Object.values(p.stats).map(s => s.percentile);
       renderSingleRadar(labels, percentiles);
 
-      const tilesContainer = document.getElementById('statTiles');
-      tilesContainer.innerHTML = Object.entries(profile.stats).map(([k, v]) => `
-        <div class="glass p-3 rounded-xl">
-          <div class="text-[10px] uppercase tracking-wider text-slate-400 truncate">${k.replace('_p90', '').replace('_', ' ')}</div>
-          <div class="text-lg font-bold text-white mt-1">${v.raw_value}</div>
-          <div class="text-[11px] font-semibold text-emerald-400">${v.percentile}th pct</div>
+      // Key Statistics Horizontal Bars
+      const statsContainer = document.getElementById('keyStatsHorizontal');
+      statsContainer.innerHTML = Object.entries(p.stats).map(([k, v]) => `
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-400 w-36 truncate uppercase text-[10px] font-bold">${k.replace('_p90', '').replace('_', ' ')}</span>
+          <div class="flex-1 mx-3 bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full" style="width: ${v.percentile}%"></div>
+          </div>
+          <span class="text-white font-black w-10 text-right">${v.raw_value}</span>
         </div>
       `).join('');
 
-      const report = profile.report;
-      document.getElementById('playerArchetype').innerText = report.archetype || "Profile";
-
-      const barsContainer = document.getElementById('categoryBars');
-      barsContainer.innerHTML = Object.entries(report.ratings || {}).map(([category, score]) => `
-        <div>
-          <div class="flex justify-between text-xs font-medium mb-1">
-            <span class="text-slate-300 font-semibold tracking-wide">${category}</span>
-            <span class="text-emerald-400 font-bold">${score}</span>
-          </div>
-          <div class="w-full bg-slate-800/90 h-2 rounded-full overflow-hidden">
-            <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full" style="width: ${score}%"></div>
-          </div>
-        </div>
-      `).join('');
-
-      document.getElementById('strengthsList').innerHTML = (report.strengths || []).map(s => `
-        <li class="flex items-center gap-2">
+      // Dossier
+      document.getElementById('strengthsList').innerHTML = (p.report?.strengths || []).map(s => `
+        <li class="flex items-center gap-2 text-slate-200">
           <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0"></span>
           <span>${s}</span>
         </li>
       `).join('');
 
-      document.getElementById('weaknessesList').innerHTML = (report.weaknesses || []).map(w => `
-        <li class="flex items-center gap-2">
+      document.getElementById('weaknessesList').innerHTML = (p.report?.weaknesses || []).map(w => `
+        <li class="flex items-center gap-2 text-slate-400">
           <span class="h-1.5 w-1.5 rounded-full bg-rose-400 flex-shrink-0"></span>
           <span>${w}</span>
         </li>
@@ -477,7 +470,7 @@
               ticks: { display: false, stepSize: 25 },
               grid: { color: 'rgba(255, 255, 255, 0.08)' },
               angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
-              pointLabels: { color: '#94a3b8', font: { size: 10, weight: '600' } }
+              pointLabels: { color: '#94a3b8', font: { size: 10, weight: '700' } }
             }
           },
           plugins: { legend: { display: false } }
@@ -492,15 +485,25 @@
         return;
       }
 
-      container.innerHTML = similars.map(p => `
-        <div class="p-3 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 transition flex items-center justify-between">
-          <div onclick="loadSinglePlayer(${p.id})" class="cursor-pointer flex-1">
-            <div class="font-bold text-sm text-white">${p.name}</div>
-            <div class="text-xs text-slate-400">${p.team} • ${p.age}y • €${p.estimated_value}M</div>
+      container.innerHTML = similars.map((p, idx) => `
+        <div class="p-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/40 transition flex items-center justify-between">
+          <div onclick="loadSinglePlayer(${p.id})" class="flex items-center gap-3 cursor-pointer flex-1">
+            <span class="text-xs font-bold text-slate-500 w-4">${idx + 1}</span>
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=0284c7&color=fff&bold=true" class="w-8 h-8 rounded-lg object-cover">
+            <div>
+              <div class="font-bold text-xs text-white flex items-center gap-1.5">
+                ${p.name}
+                <img src="${getFlagUrl(p.country_code)}" class="w-3.5 h-2.5 rounded-sm inline">
+              </div>
+              <div class="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                <img src="${p.club_logo}" class="w-3 h-3 inline object-contain">
+                ${p.team}
+              </div>
+            </div>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs font-black text-emerald-400">${p.similarity_score}%</span>
-            <button onclick="compareWithTwin(${p.id})" class="text-[11px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md border border-emerald-500/20">
+            <button onclick="compareWithTwin(${p.id})" class="text-[10px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md border border-emerald-500/20">
               ⚔️
             </button>
           </div>
@@ -519,148 +522,61 @@
       setMode('replace');
     }
 
-    // --- COMPARISON LOGIC ---
     function renderComparison() {
       if (!activePlayerA || !activePlayerB) return;
 
-      document.getElementById('searchPlayerA').value = activePlayerA.name;
-      document.getElementById('searchPlayerB').value = activePlayerB.name;
-
       document.getElementById('compNameA').innerText = activePlayerA.name;
-      document.getElementById('compTeamA').innerText = `${activePlayerA.team} • ${activePlayerA.age}y • €${activePlayerA.estimated_value}M`;
-      document.getElementById('compPosA').innerText = activePlayerA.position;
-      document.getElementById('compArchA').innerText = activePlayerA.report?.archetype || 'Profile';
+      document.getElementById('compTeamA').innerText = activePlayerA.team;
+      document.getElementById('compFaceA').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(activePlayerA.name)}&background=10b981&color=0d1117&bold=true`;
 
       document.getElementById('compNameB').innerText = activePlayerB.name;
-      document.getElementById('compTeamB').innerText = `${activePlayerB.team} • ${activePlayerB.age}y • €${activePlayerB.estimated_value}M`;
-      document.getElementById('compPosB').innerText = activePlayerB.position;
-      document.getElementById('compArchB').innerText = activePlayerB.report?.archetype || 'Profile';
+      document.getElementById('compTeamB').innerText = activePlayerB.team;
+      document.getElementById('compFaceB').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(activePlayerB.name)}&background=06b6d4&color=0d1117&bold=true`;
 
       const labels = Object.keys(activePlayerA.stats).map(k => k.replace('_p90', '').replace('_', ' ').toUpperCase());
       const p1Data = Object.values(activePlayerA.stats).map(s => s.percentile);
       const p2Data = Object.values(activePlayerB.stats).map(s => s.percentile);
 
-      renderCompareRadar(labels, p1Data, p2Data, activePlayerA.name, activePlayerB.name);
-      renderHeadToHeadRatings(activePlayerA, activePlayerB);
-      renderTaleOfTape(activePlayerA, activePlayerB);
-    }
-
-    function renderCompareRadar(labels, dataA, dataB, nameA, nameB) {
       const ctx = document.getElementById('compareRadarChart').getContext('2d');
       if (compareRadarInstance) compareRadarInstance.destroy();
-
       compareRadarInstance = new Chart(ctx, {
         type: 'radar',
         data: {
           labels: labels,
           datasets: [
-            {
-              label: nameA,
-              data: dataA,
-              backgroundColor: 'rgba(16, 185, 129, 0.25)',
-              borderColor: '#10b981',
-              borderWidth: 2,
-              pointBackgroundColor: '#10b981'
-            },
-            {
-              label: nameB,
-              data: dataB,
-              backgroundColor: 'rgba(6, 182, 212, 0.25)',
-              borderColor: '#06b6d4',
-              borderWidth: 2,
-              pointBackgroundColor: '#06b6d4'
-            }
+            { label: activePlayerA.name, data: p1Data, backgroundColor: 'rgba(16, 185, 129, 0.25)', borderColor: '#10b981', borderWidth: 2 },
+            { label: activePlayerB.name, data: p2Data, backgroundColor: 'rgba(6, 182, 212, 0.25)', borderColor: '#06b6d4', borderWidth: 2 }
           ]
         },
         options: {
-          scales: {
-            r: {
-              min: 0,
-              max: 100,
-              ticks: { display: false, stepSize: 25 },
-              grid: { color: 'rgba(255, 255, 255, 0.08)' },
-              angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
-              pointLabels: { color: '#94a3b8', font: { size: 10, weight: '600' } }
-            }
-          },
-          plugins: { legend: { display: false } }
+          scales: { r: { min: 0, max: 100, ticks: { display: false } } },
+          plugins: { legend: { labels: { color: '#fff' } } }
         }
       });
-    }
 
-    function renderHeadToHeadRatings(pA, pB) {
-      const container = document.getElementById('headToHeadBars');
-      const ratingsA = pA.report?.ratings || {};
-      const ratingsB = pB.report?.ratings || {};
-      const categories = Object.keys(ratingsA);
-
-      container.innerHTML = categories.map(cat => {
-        const scoreA = ratingsA[cat] || 50;
-        const scoreB = ratingsB[cat] || 50;
-        const aWins = scoreA >= scoreB;
-
+      const metrics = Object.keys(activePlayerA.stats);
+      document.getElementById('taleOfTapeRows').innerHTML = metrics.map(m => {
+        const valA = activePlayerA.stats[m].raw_value;
+        const valB = activePlayerB.stats[m].raw_value;
         return `
-          <div class="glass p-3 rounded-xl">
-            <div class="flex justify-between text-xs font-bold uppercase tracking-wider mb-2">
-              <span class="${aWins ? 'text-emerald-400' : 'text-slate-400'}">${pA.name}: ${scoreA}</span>
-              <span class="text-white">${cat}</span>
-              <span class="${!aWins ? 'text-cyan-400' : 'text-slate-400'}">${scoreB} :${pB.name}</span>
-            </div>
-            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mb-1">
-              <div class="bg-emerald-400 h-full rounded-full" style="width: ${scoreA}%"></div>
-            </div>
-            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-              <div class="bg-cyan-400 h-full rounded-full" style="width: ${scoreB}%"></div>
-            </div>
+          <div class="grid grid-cols-7 items-center p-2 rounded-lg bg-slate-800/40">
+            <div class="col-span-2 font-bold ${valA >= valB ? 'text-emerald-400' : 'text-slate-400'}">${valA}</div>
+            <div class="col-span-3 text-center text-[10px] text-slate-300 font-semibold">${m.replace('_p90','').replace('_',' ').toUpperCase()}</div>
+            <div class="col-span-2 text-right font-bold ${valB > valA ? 'text-cyan-400' : 'text-slate-400'}">${valB}</div>
           </div>
         `;
       }).join('');
     }
 
-    function renderTaleOfTape(pA, pB) {
-      const container = document.getElementById('taleOfTapeRows');
-      const metrics = Object.keys(pA.stats);
-
-      container.innerHTML = metrics.map(metric => {
-        const valA = pA.stats[metric].raw_value;
-        const valB = pB.stats[metric].raw_value;
-        const label = metric.replace('_p90', '').replace('_', ' ').toUpperCase();
-        const aBetter = valA > valB;
-        const tie = valA === valB;
-
-        return `
-          <div class="grid grid-cols-7 items-center p-2 rounded-lg bg-slate-800/30 border border-slate-700/20">
-            <div class="col-span-2 text-left font-bold ${aBetter ? 'text-emerald-400' : 'text-slate-400'}">${valA}</div>
-            <div class="col-span-3 text-center text-[10px] font-semibold text-slate-300">${label}</div>
-            <div class="col-span-2 text-right font-bold ${!aBetter && !tie ? 'text-cyan-400' : 'text-slate-400'}">${valB}</div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    // --- REPLACEMENT ENGINE LOGIC ---
     async function loadReplacementDashboard(targetId) {
       const res = await fetch(`/api/scout/player/${targetId}`);
       targetReplacementPlayer = await res.json();
-
       document.getElementById('targetPlayerBadge').innerText = `Target: ${targetReplacementPlayer.name}`;
-      document.getElementById('repTargetName').innerText = targetReplacementPlayer.name;
-      document.getElementById('repTargetMeta').innerText = `${targetReplacementPlayer.team} • ${targetReplacementPlayer.age} yrs`;
-      document.getElementById('repTargetVal').innerText = `€${targetReplacementPlayer.estimated_value}M`;
-      document.getElementById('repTargetArch').innerText = targetReplacementPlayer.report?.archetype || 'Specialist';
-
-      document.getElementById('repTargetStrengths').innerHTML = (targetReplacementPlayer.report?.strengths || []).map(s => `
-        <li class="flex items-center gap-2 text-emerald-400">
-          <span>✓</span> <span class="text-slate-200">${s}</span>
-        </li>
-      `).join('');
-
       await updateReplacementFilters();
     }
 
     async function updateReplacementFilters() {
       if (!targetReplacementPlayer) return;
-
       const maxAge = document.getElementById('maxAgeInput').value;
       const budget = document.getElementById('budgetInput').value;
       const minSim = document.getElementById('simInput').value;
@@ -669,60 +585,29 @@
       document.getElementById('budgetLabel').innerText = `€${budget}M`;
       document.getElementById('simLabel').innerText = `${minSim}%`;
 
-      const res = await fetch(
-        `/api/scout/player/${targetReplacementPlayer.id}/replacements?max_age=${maxAge}&max_budget=${budget}&min_similarity=${minSim}&top_k=8`
-      );
+      const res = await fetch(`/api/scout/player/${targetReplacementPlayer.id}/replacements?max_age=${maxAge}&max_budget=${budget}&min_similarity=${minSim}&top_k=8`);
       const candidates = await res.json();
+      document.getElementById('targetsCount').innerText = `${candidates.length} Targets`;
 
-      document.getElementById('targetsCount').innerText = `${candidates.length} realistic targets found`;
-
-      const listContainer = document.getElementById('replacementCardsList');
-      if (!candidates.length) {
-        listContainer.innerHTML = `
-          <div class="text-center py-12 text-slate-400 text-xs">
-            No players meet this age, budget, and similarity threshold. Try broadening your criteria.
-          </div>
-        `;
-        return;
-      }
-
-      listContainer.innerHTML = candidates.map((p, idx) => `
-        <div class="glass p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-emerald-500/40 transition">
-          <div class="flex items-center gap-4">
-            <span class="text-lg font-black text-slate-500 w-5">#${idx + 1}</span>
+      document.getElementById('replacementCardsList').innerHTML = candidates.map((p, idx) => `
+        <div class="glass-card p-3 rounded-xl flex items-center justify-between hover:border-emerald-500/40 transition">
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-bold text-slate-500">#${idx + 1}</span>
+            <img src="${p.club_logo}" class="w-6 h-6 object-contain">
             <div>
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-sm text-white">${p.name}</span>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">${p.age} yrs</span>
+              <div class="font-bold text-xs text-white flex items-center gap-1.5">
+                ${p.name}
+                <img src="${getFlagUrl(p.country_code)}" class="w-3.5 h-2.5 rounded-sm inline">
               </div>
-              <div class="text-xs text-slate-400 mt-0.5">${p.team} • <span class="text-teal-400 font-semibold">€${p.estimated_value}M Est. Value</span></div>
+              <div class="text-[10px] text-slate-400">${p.team} • ${p.age}y • €${p.estimated_value}M Est.</div>
             </div>
           </div>
-
-          <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-            <div class="text-right">
-              <div class="text-xs font-black text-emerald-400">${p.similarity_score}% Match</div>
-              <div class="w-24 bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
-                <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full" style="width: ${p.similarity_score}%"></div>
-              </div>
-            </div>
-
-            <div class="flex gap-2">
-              <button onclick="inspectTarget(${p.id})" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 font-medium transition">
-                Scout
-              </button>
-              <button onclick="compareWithTwin(${p.id})" class="text-xs bg-emerald-500 hover:bg-emerald-400 text-black px-3 py-1.5 rounded-lg font-semibold transition">
-                Compare
-              </button>
-            </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-black text-emerald-400">${p.similarity_score}%</span>
+            <button onclick="loadSinglePlayer(${p.id}); setMode('single');" class="text-[11px] bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-2.5 py-1 rounded-md">Scout</button>
           </div>
         </div>
       `).join('');
-    }
-
-    function inspectTarget(id) {
-      loadSinglePlayer(id);
-      setMode('single');
     }
 
     window.addEventListener('DOMContentLoaded', () => {
