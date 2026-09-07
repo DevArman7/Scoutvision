@@ -56,3 +56,25 @@ def get_similar_players(
     if similar is None:
         raise HTTPException(status_code=404, detail="Player not found")
     return similar
+
+@app.get("/api/scout/player/{player_id}/replacements")
+def find_player_replacements(
+    player_id: int,
+    min_age: int = Query(16, ge=15, le=40),
+    max_age: int = Query(28, ge=15, le=40),
+    max_budget: float = Query(60.0, description="Max transfer budget in Millions (€)"),
+    min_similarity: float = Query(75.0, ge=50.0, le=99.0),
+    top_k: int = Query(10, ge=1, le=20)
+):
+    """Find realistic recruitment replacements based on age, budget cap, and similarity."""
+    replacements = scout_engine.find_replacements(
+        player_id=player_id,
+        min_age=min_age,
+        max_age=max_age,
+        max_budget=max_budget,
+        min_similarity=min_similarity,
+        top_k=top_k
+    )
+    if replacements is None:
+        raise HTTPException(status_code=404, detail="Player not found")
+    return replacements
