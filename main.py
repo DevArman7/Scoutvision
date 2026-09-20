@@ -113,3 +113,28 @@ def analyze_squad(payload: SquadAnalyzeRequest):
                 bench.append(prof)
 
     return scout_engine.analyze_squad(starting_players=starters, bench_players=bench)
+
+class OptimizerRequest(BaseModel):
+    budget: float = 100.0
+    positions: List[str] = ["RW", "CB", "DM"]
+    scenario: Optional[str] = "balanced"
+    max_age: Optional[int] = None
+    min_rating: Optional[float] = None
+    min_potential: Optional[float] = None
+    league: Optional[str] = None
+    preferred_foot: Optional[str] = None
+
+@app.post("/api/scout/optimizer/solve")
+def solve_transfer_optimizer(payload: OptimizerRequest):
+    """Calculates optimal recruitment combinations for a given budget and required positions."""
+    return scout_engine.optimize_transfer_budget(
+        budget=payload.budget,
+        positions=payload.positions,
+        scenario=payload.scenario or "balanced",
+        max_age=payload.max_age,
+        min_rating=payload.min_rating,
+        min_potential=payload.min_potential,
+        league=payload.league,
+        preferred_foot=payload.preferred_foot
+    )
+

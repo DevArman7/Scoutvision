@@ -507,3 +507,220 @@ class ScoutingEngine:
             "weakness_role": weakness_target_pos,
             "recommended_candidates": recommended_candidates
         }
+
+    def optimize_transfer_budget(
+        self,
+        budget: float,
+        positions: List[str],
+        scenario: str = "balanced",
+        max_age: Optional[int] = None,
+        min_rating: Optional[float] = None,
+        min_potential: Optional[float] = None,
+        league: Optional[str] = None,
+        preferred_foot: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Calculates multi-player recruitment combinations within a budget cap and ranks top strategies."""
+        if not positions:
+            positions = ["RW", "CB", "DM"]
+
+        pos_map = {
+            "GK": "GK",
+            "RB": "DF", "LB": "DF", "CB": "DF", "RWB": "DF", "LWB": "DF",
+            "DM": "MF", "CM": "MF", "AM": "MF",
+            "RW": "FW", "LW": "FW", "ST": "FW"
+        }
+
+        # Calculate player quality & potential columns if not present
+        pct_cols = [f"{m}_pct" for m in self.feature_columns if f"{m}_pct" in self.df.columns]
+        if 'quality_rating' not in self.df.columns:
+            avg_pct = self.df[pct_cols].mean(axis=1)
+            self.df['quality_rating'] = (68 + (avg_pct * 0.26)).round(1).clip(lower=60.0, upper=98.0)
+            
+            # Young players get potential bonus
+            age_bonus = (25 - self.df['age']).clip(lower=0) * 1.5
+            self.df['potential_rating'] = (self.df['quality_rating'] + age_bonus).round(1).clip(lower=60.0, upper=99.0)
+
+        # Candidates pool per position slot
+        candidates_by_slot = []
+        cheapest_per_slot = []
+
+        for slot_idx, target_pos_code in enumerate(positions):
+            mapped_pos = pos_map.get(target_pos_code.upper(), "MF")
+            pool = self.df[self.df["position"].str.upper() == mapped_pos].copy()
+
+            if max_age:
+                pool = pool[pool["age"] <= max_age]
+            if min_rating:
+                pool = pool[pool["quality_rating"] >= min_rating]
+            if min_potential:
+                pool = pool[pool["potential_rating"] >= min_potential]
+            if league and league.lower() != "any":
+                pool = pool[pool["league"].str.contains(league, case=False, na=False)]
+
+            # Filter out players that individually exceed full budget
+            pool = pool[pool["estimated_value"] <= budget]
+
+            if pool.empty:
+                pool = self.df[self.df["position"].str.upper() == mapped_pos].copy()
+
+            if pool.empty:
+                cheapest_per_slot.append(15.0)
+                candidates_by_slot.append([])
+                continue
+
+            cheapest_per_slot.append(float(pool["estimated_value"].min()))
+
+            # Pick top diverse candidates for this slot (up to 12)
+            pool_sorted = pool.sort_values(by="quality_rating", ascending=False)
+            candidates_by_slot.append(pool_sorted.head(12).to_dict(orient="records"))
+
+        min_required_budget = round(sum(cheapest_per_slot), 1)
+
+        if any(len(c) == 0 for c in candidates_by_slot) or min_required_budget > budget:
+            return {
+                "success": False,
+                "budget": budget,
+                "estimated_min_required": max(min_required_budget, round(budget * 1.2, 1)),
+                "suggestions": [
+                    "Increase your overall transfer budget",
+                    "Lower minimum player rating or age filters",
+                    "Remove one of the requested positions",
+                    "Allow younger or lower-cost players"
+                ],
+                "strategies": []
+            }
+
+        import itertools
+        valid_combos = []
+
+        raw_products = itertools.product(*candidates_by_slot)
+
+        for combo_tuple in raw_products:
+            p_ids = [p["id"] for p in combo_tuple]
+            if len(p_ids) != len(set(p_ids)):
+                continue
+
+            total_cost = round(sum(p["estimated_value"] for p in combo_tuple), 1)
+            if total_cost > budget:
+                continue
+
+            rem_budget = round(budget - total_cost, 1)
+            avg_q = round(float(np.mean([p["quality_rating"] for p in combo_tuple])), 1)
+            avg_pot = round(float(np.mean([p["potential_rating"] for p in combo_tuple])), 1)
+
+            if scenario == "quality":
+                w_q, w_p, w_b = 0.55, 0.30, 0.15
+            elif scenario == "budget":
+                w_q, w_p, w_b = 0.25, 0.20, 0.55
+            elif scenario == "potential":
+                w_q, w_p, w_b = 0.30, 0.55, 0.15
+            elif scenario == "lowest_cost":
+                w_q, w_p, w_b = 0.15, 0.15, 0.70
+            else:
+                w_q, w_p, w_b = 0.45, 0.30, 0.25
+
+            norm_q = (avg_q - 60) / 35.0
+            norm_p = (avg_pot - 60) / 35.0
+            norm_b = rem_budget / max(1.0, budget)
+            value_score = round(min(99.0, max(50.0, (norm_q * w_q + norm_p * w_p + norm_b * w_b) * 45.0 + 54.0)), 1)
+
+            players_payload = []
+            for slot_code, p in zip(positions, combo_tuple):
+                team_name = str(p.get("team", "Club"))
+                players_payload.append({
+                    "slot": slot_code,
+                    "id": int(p["id"]),
+                    "name": str(p["name"]),
+                    "team": team_name,
+                    "club_logo": self._get_club_logo_url(team_name),
+                    "country_code": str(p.get("country_code", "eu")),
+                    "position": str(p.get("position", slot_code)),
+                    "age": int(p.get("age", 24)),
+                    "estimated_value": float(p.get("estimated_value", 10.0)),
+                    "rating": float(p.get("quality_rating", 80.0)),
+                    "potential": float(p.get("potential_rating", 85.0)),
+                    "value_score": round(min(98.0, max(65.0, float(p.get("quality_rating", 80.0)) * 0.6 + (budget / max(1.0, float(p.get("estimated_value", 10.0)))) * 0.4)), 1)
+                })
+
+            valid_combos.append({
+                "total_cost": total_cost,
+                "remaining_budget": rem_budget,
+                "budget_used_pct": round((total_cost / budget) * 100, 1),
+                "avg_quality": avg_q,
+                "avg_potential": avg_pot,
+                "value_score": value_score,
+                "players": players_payload
+            })
+
+            if len(valid_combos) >= 200:
+                break
+
+        if not valid_combos:
+            return {
+                "success": False,
+                "budget": budget,
+                "estimated_min_required": max(min_required_budget, round(budget * 1.15, 1)),
+                "suggestions": [
+                    "Increase your budget slightly",
+                    "Lower minimum rating or potential filters",
+                    "Remove a position requirement"
+                ],
+                "strategies": []
+            }
+
+        valid_combos.sort(key=lambda x: x["value_score"], reverse=True)
+        best_value = valid_combos[0]
+        best_value["badge"] = "🥇 Best Value"
+        best_value["strategy_id"] = "best_value"
+        best_value["title"] = "Best Value Strategy"
+        best_value["description"] = "Maximizes player quality & potential per euro spent."
+
+        strategies = [best_value]
+
+        by_quality = sorted(valid_combos, key=lambda x: x["avg_quality"], reverse=True)
+        hq = next((c for c in by_quality if c["players"] != best_value["players"]), None)
+        if hq:
+            hq_copy = dict(hq)
+            hq_copy["badge"] = "💎 Highest Quality"
+            hq_copy["strategy_id"] = "highest_quality"
+            hq_copy["title"] = "Max Quality Strategy"
+            hq_copy["description"] = "Prioritizes top overall player ratings."
+            strategies.append(hq_copy)
+
+        by_pot = sorted(valid_combos, key=lambda x: x["avg_potential"], reverse=True)
+        hp = next((c for c in by_pot if all(c["players"] != s["players"] for s in strategies)), None)
+        if hp:
+            hp_copy = dict(hp)
+            hp_copy["badge"] = "⚡ High Potential"
+            hp_copy["strategy_id"] = "high_potential"
+            hp_copy["title"] = "Future Talent Strategy"
+            hp_copy["description"] = "Targets elite young players with high growth ceilings."
+            strategies.append(hp_copy)
+
+        by_rem = sorted(valid_combos, key=lambda x: x["remaining_budget"], reverse=True)
+        bc = next((c for c in by_rem if all(c["players"] != s["players"] for s in strategies)), None)
+        if bc:
+            bc_copy = dict(bc)
+            bc_copy["badge"] = "🛡️ Budget Conservative"
+            bc_copy["strategy_id"] = "budget_conservative"
+            bc_copy["title"] = "Capital Saver Strategy"
+            bc_copy["description"] = "Leaves maximum budget remaining for emergency windows."
+            strategies.append(bc_copy)
+
+        if len(strategies) < 5:
+            bal = next((c for c in valid_combos if all(c["players"] != s["players"] for s in strategies)), None)
+            if bal:
+                bal_copy = dict(bal)
+                bal_copy["badge"] = "⚖️ Balanced Squad"
+                bal_copy["strategy_id"] = "balanced_squad"
+                bal_copy["title"] = "Balanced Recruitment Strategy"
+                bal_copy["description"] = "Solid quality balance with safe financial buffer."
+                strategies.append(bal_copy)
+
+        return {
+            "success": True,
+            "budget": budget,
+            "positions_requested": positions,
+            "best_strategy": best_value,
+            "strategies": strategies
+        }

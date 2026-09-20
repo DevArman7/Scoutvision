@@ -39,6 +39,7 @@
         <button id="compareModeBtn" onclick="setMode('compare')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">⚔️ Comparison</button>
         <button id="replaceModeBtn" onclick="setMode('replace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🔎 Find Replacement</button>
         <button id="squadModeBtn" onclick="setMode('squad')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🛡️ Squad Builder</button>
+        <button id="optimizerModeBtn" onclick="setMode('optimizer')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">💰 Budget Optimizer</button>
       </div>
 
       <!-- Mobile Hamburger Button -->
@@ -60,6 +61,9 @@
       </button>
       <button id="mobileSquadModeBtn" onclick="setMode('squad'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2">
         <span>🛡️</span> Squad Builder
+      </button>
+      <button id="mobileOptimizerModeBtn" onclick="setMode('optimizer'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2">
+        <span>💰</span> Budget Optimizer
       </button>
     </div>
   </header>
@@ -462,6 +466,262 @@
       </div>
     </div>
 
+    <!-- VIEW 5: TRANSFER BUDGET OPTIMIZER -->
+    <div id="optimizerDashboard" class="hidden space-y-6 relative z-10">
+      
+      <!-- Optimizer Input Controls Card -->
+      <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-700/60 shadow-2xl space-y-5">
+        
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-xl shadow-lg shadow-emerald-500/20 flex-shrink-0">💰</div>
+            <div>
+              <h2 class="text-base sm:text-lg font-black text-white flex items-center gap-2">Transfer Budget Optimizer</h2>
+              <p class="text-xs text-slate-400">Plan multi-player recruitment drives under a fixed financial cap</p>
+            </div>
+          </div>
+          <button onclick="resetOptimizerForm()" class="text-xs text-slate-400 hover:text-white font-bold bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700 transition">
+            🧹 Reset Parameters
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Left Column: Budget & Position Selector (7 cols) -->
+          <div class="lg:col-span-7 space-y-5">
+            
+            <!-- Budget Input & Presets -->
+            <div class="space-y-2">
+              <label class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+                <span>Transfer Budget Cap</span>
+                <span id="optBudgetDisplay" class="text-emerald-400 font-extrabold text-sm">€100M</span>
+              </label>
+              
+              <div class="flex items-center gap-2">
+                <span class="text-slate-400 font-black text-lg">€</span>
+                <input 
+                  id="optBudgetInput" 
+                  type="number" 
+                  value="100" 
+                  min="5" 
+                  max="500" 
+                  step="5" 
+                  class="bg-[#141a24] border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500 w-32" 
+                  oninput="updateBudgetDisplay(this.value)"
+                />
+                <span class="text-slate-400 font-bold text-sm">Million</span>
+              </div>
+
+              <!-- Quick Presets -->
+              <div class="flex items-center flex-wrap gap-1.5 pt-1">
+                <span class="text-[10px] text-slate-400 uppercase font-bold mr-1">Presets:</span>
+                <button onclick="setBudgetPreset(50)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700 transition">€50M</button>
+                <button onclick="setBudgetPreset(75)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700 transition">€75M</button>
+                <button onclick="setBudgetPreset(100)" class="px-3 py-1 rounded-lg bg-emerald-500 text-black text-xs font-black transition">€100M</button>
+                <button onclick="setBudgetPreset(150)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700 transition">€150M</button>
+                <button onclick="setBudgetPreset(200)" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700 transition">€200M</button>
+              </div>
+            </div>
+
+            <!-- Positions Needed Section -->
+            <div class="space-y-2.5 pt-2">
+              <label class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+                <span>Positions Needed to Strengthen</span>
+                <span id="optPosCountBadge" class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">3 Positions Selected</span>
+              </label>
+
+              <!-- Selected Tags List -->
+              <div id="optSelectedPositions" class="flex flex-wrap items-center gap-2 p-3 bg-slate-900/80 rounded-2xl border border-slate-800 min-h-[52px]">
+                <!-- Dynamically rendered position pills -->
+              </div>
+
+              <!-- Quick Add Position Buttons -->
+              <div class="space-y-1.5 pt-1">
+                <span class="text-[11px] text-slate-400 font-semibold block">Click to add position (duplicates allowed):</span>
+                <div class="flex items-center flex-wrap gap-1.5">
+                  <button onclick="addOptPosition('GK')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ GK</button>
+                  <button onclick="addOptPosition('CB')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ CB</button>
+                  <button onclick="addOptPosition('LB')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ LB</button>
+                  <button onclick="addOptPosition('RB')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ RB</button>
+                  <button onclick="addOptPosition('DM')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ DM</button>
+                  <button onclick="addOptPosition('CM')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ CM</button>
+                  <button onclick="addOptPosition('AM')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ AM</button>
+                  <button onclick="addOptPosition('RW')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ RW</button>
+                  <button onclick="addOptPosition('LW')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ LW</button>
+                  <button onclick="addOptPosition('ST')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 border border-slate-700 text-xs font-bold transition">+ ST</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Strategy Scenarios & Optional Filters (5 cols) -->
+          <div class="lg:col-span-5 space-y-5 flex flex-col justify-between">
+            
+            <!-- Recruitment Strategy Scenario Radio Group -->
+            <div class="space-y-2">
+              <label class="text-xs font-bold uppercase tracking-wider text-slate-300">Recruitment Strategy Goal</label>
+              <div class="grid grid-cols-1 gap-2">
+                <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-emerald-500/40 cursor-pointer transition">
+                  <div class="flex items-center gap-2">
+                    <input type="radio" name="optScenario" value="balanced" checked class="accent-emerald-500" onchange="optScenarioChanged()">
+                    <span class="text-xs font-bold text-white">⚖️ Balanced Spending</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400">Quality + Buffer</span>
+                </label>
+                <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-emerald-500/40 cursor-pointer transition">
+                  <div class="flex items-center gap-2">
+                    <input type="radio" name="optScenario" value="quality" class="accent-emerald-500" onchange="optScenarioChanged()">
+                    <span class="text-xs font-bold text-white">💎 Maximize Squad Quality</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400">Top Ratings</span>
+                </label>
+                <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-emerald-500/40 cursor-pointer transition">
+                  <div class="flex items-center gap-2">
+                    <input type="radio" name="optScenario" value="budget" class="accent-emerald-500" onchange="optScenarioChanged()">
+                    <span class="text-xs font-bold text-white">🛡️ Preserve Maximum Budget</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400">High Remaining</span>
+                </label>
+                <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-emerald-500/40 cursor-pointer transition">
+                  <div class="flex items-center gap-2">
+                    <input type="radio" name="optScenario" value="potential" class="accent-emerald-500" onchange="optScenarioChanged()">
+                    <span class="text-xs font-bold text-white">⚡ High Potential Growth</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400">Young Stars</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Optional Filters Collapsible -->
+            <details class="bg-slate-900/40 rounded-2xl border border-slate-800 p-3 group">
+              <summary class="text-xs font-bold text-slate-300 uppercase cursor-pointer flex items-center justify-between select-none">
+                <span>⚙️ Advanced Filters (Optional)</span>
+                <span class="text-slate-500 group-open:rotate-180 transition">▼</span>
+              </summary>
+              <div class="grid grid-cols-2 gap-3 pt-3 mt-2 border-t border-slate-800/80">
+                <div>
+                  <label class="text-[10px] text-slate-400 font-bold block mb-1">Max Age: <span id="optAgeValLabel" class="text-emerald-400">28</span></label>
+                  <input id="optMaxAge" type="range" min="18" max="35" value="28" class="w-full" oninput="document.getElementById('optAgeValLabel').innerText = this.value">
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-400 font-bold block mb-1">Min Rating: <span id="optRatingValLabel" class="text-emerald-400">75</span></label>
+                  <input id="optMinRating" type="range" min="60" max="92" value="75" class="w-full" oninput="document.getElementById('optRatingValLabel').innerText = this.value">
+                </div>
+              </div>
+            </details>
+
+            <!-- Optimize Trigger Button -->
+            <button onclick="runBudgetOptimizer()" class="w-full py-3.5 rounded-2xl text-sm font-black bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black transition shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 cursor-pointer">
+              <span>⚡</span> Optimize Recruitment
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- EMPTY STATE CONTAINER -->
+      <div id="optEmptyState" class="glass-card p-8 rounded-3xl border border-slate-800 text-center space-y-4 max-w-2xl mx-auto my-6">
+        <div class="h-16 w-16 rounded-3xl bg-gradient-to-tr from-emerald-500/20 to-teal-400/20 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto shadow-inner">
+          ⚡
+        </div>
+        <div>
+          <h3 class="text-lg font-black text-white">Build Your Recruitment Strategy</h3>
+          <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+            Set your transfer budget and select the positions you need to strengthen. ScoutVision will analyze thousands of player combinations to maximize squad quality while respecting your budget cap.
+          </p>
+        </div>
+        <button onclick="runBudgetOptimizer()" class="px-6 py-2.5 rounded-xl text-xs font-extrabold bg-emerald-500 text-black hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 inline-flex items-center gap-1.5">
+          <span>⚡</span> Start Optimizing
+        </button>
+      </div>
+
+      <!-- LOADING STATE OVERLAY -->
+      <div id="optLoadingState" class="hidden glass-card p-8 rounded-3xl border border-slate-800 text-center space-y-5 max-w-lg mx-auto my-6">
+        <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-emerald-500 border-t-transparent"></div>
+        <div>
+          <h4 class="text-sm font-black text-white" id="optLoadingText">Analyzing squad requirements...</h4>
+          <p class="text-xs text-slate-400 mt-1">Calculating multi-player transfer combinations</p>
+        </div>
+        <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800 max-w-xs mx-auto">
+          <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full animate-pulse w-3/4"></div>
+        </div>
+      </div>
+
+      <!-- IMPOSSIBLE BUDGET ERROR BANNER -->
+      <div id="optErrorBanner" class="hidden glass-card p-6 rounded-3xl border border-rose-500/40 bg-rose-500/10 text-slate-200 space-y-4 max-w-2xl mx-auto my-6 shadow-2xl">
+        <div class="flex items-start gap-3">
+          <div class="text-2xl leading-none flex-shrink-0">⚠️</div>
+          <div class="space-y-1">
+            <h4 class="text-sm font-black text-rose-400 uppercase tracking-wide">No valid recruitment strategy found</h4>
+            <p class="text-xs text-slate-300">Your current requirements exceed the available budget cap.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-center text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Current Budget</span>
+            <span id="optErrorCurrentBudget" class="text-rose-400 font-extrabold text-sm">€50M</span>
+          </div>
+          <div class="border-l border-slate-800">
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Estimated Required Min</span>
+            <span id="optErrorMinBudget" class="text-emerald-400 font-extrabold text-sm">€68M</span>
+          </div>
+        </div>
+
+        <div class="space-y-1 text-xs text-slate-300">
+          <span class="font-bold text-slate-200 block">Suggestions to solve this gap:</span>
+          <ul id="optErrorSuggestionsList" class="list-disc list-inside space-y-0.5 text-slate-400 text-[11px]"></ul>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button onclick="increaseBudgetShortcut()" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-black transition shadow">
+            ➕ Increase Budget (+€25M)
+          </button>
+          <button onclick="relaxFiltersShortcut()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition border border-slate-700">
+            🔓 Relax Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- RESULTS DASHBOARD LAYER -->
+      <div id="optResultsContainer" class="hidden space-y-6">
+        
+        <!-- BEST VALUE FEATURED STRATEGY -->
+        <div id="optBestValueCard" class="glass-card hero-gradient p-5 sm:p-6 rounded-3xl border border-emerald-500/40 shadow-2xl relative overflow-hidden space-y-5">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- OTHER RECRUITMENT STRATEGIES GRID -->
+        <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-sm font-extrabold text-white flex items-center gap-2"><span>📊</span> Alternative Recruitment Strategies</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Explore combinations optimized for quality, potential, or conservative spending</p>
+            </div>
+          </div>
+
+          <div id="optOtherStrategiesList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- STRATEGY COMPARISON MATRIX -->
+        <div id="optComparisonSection" class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-extrabold text-white flex items-center gap-2"><span>⚔️</span> Side-by-Side Strategy Matrix</h3>
+            <span class="text-xs text-emerald-400 font-bold">Compare Options</span>
+          </div>
+          <div id="optComparisonMatrix" class="overflow-x-auto">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
     <!-- PLAYER PICKER MODAL -->
     <div id="playerPickerModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
       <div class="glass-card max-w-lg w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-700 shadow-2xl relative space-y-3 sm:space-y-4 max-h-[90vh] sm:max-h-[85vh] flex flex-col mx-1 sm:mx-0">
@@ -591,6 +851,7 @@
       const compareDash = document.getElementById('compareDashboard');
       const replaceDash = document.getElementById('replaceDashboard');
       const squadDash = document.getElementById('squadDashboard');
+      const optDash = document.getElementById('optimizerDashboard');
 
       const singleSearch = document.getElementById('singleSearchContainer');
       const compareSearch = document.getElementById('compareSearchContainer');
@@ -600,15 +861,17 @@
       const compareBtn = document.getElementById('compareModeBtn');
       const replaceBtn = document.getElementById('replaceModeBtn');
       const squadBtn = document.getElementById('squadModeBtn');
+      const optBtn = document.getElementById('optimizerModeBtn');
 
       const mobSingleBtn = document.getElementById('mobileSingleModeBtn');
       const mobCompareBtn = document.getElementById('mobileCompareModeBtn');
       const mobReplaceBtn = document.getElementById('mobileReplaceModeBtn');
       const mobSquadBtn = document.getElementById('mobileSquadModeBtn');
+      const mobOptBtn = document.getElementById('mobileOptimizerModeBtn');
 
-      [singleDash, compareDash, replaceDash, squadDash, singleSearch, compareSearch, replaceSearch].forEach(el => el && el.classList.add('hidden'));
-      [singleBtn, compareBtn, replaceBtn, squadBtn].forEach(b => b && (b.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition"));
-      [mobSingleBtn, mobCompareBtn, mobReplaceBtn, mobSquadBtn].forEach(b => b && (b.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2"));
+      [singleDash, compareDash, replaceDash, squadDash, optDash, singleSearch, compareSearch, replaceSearch].forEach(el => el && el.classList.add('hidden'));
+      [singleBtn, compareBtn, replaceBtn, squadBtn, optBtn].forEach(b => b && (b.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition"));
+      [mobSingleBtn, mobCompareBtn, mobReplaceBtn, mobSquadBtn, mobOptBtn].forEach(b => b && (b.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2"));
 
       if (mode === 'single') {
         singleDash.classList.remove('hidden');
@@ -635,6 +898,11 @@
         if (!currentSquad.starting_xi || Object.keys(currentSquad.starting_xi).length === 0) {
           loadPresetSquad();
         }
+      } else if (mode === 'optimizer') {
+        optDash.classList.remove('hidden');
+        if (optBtn) optBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-black transition";
+        if (mobOptBtn) mobOptBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2";
+        renderOptPositions();
       }
     }
 
@@ -1359,8 +1627,316 @@
       await triggerSquadUpdate();
     }
 
+    // ==========================================
+    // TRANSFER BUDGET OPTIMIZER CONTROLLER
+    // ==========================================
+    let optPositions = ["RW", "CB", "DM"];
+    let currentOptResult = null;
+
+    function setBudgetPreset(val) {
+      document.getElementById('optBudgetInput').value = val;
+      updateBudgetDisplay(val);
+      runBudgetOptimizer();
+    }
+
+    function updateBudgetDisplay(val) {
+      document.getElementById('optBudgetDisplay').innerText = `€${val}M`;
+    }
+
+    function renderOptPositions() {
+      const container = document.getElementById('optSelectedPositions');
+      const badge = document.getElementById('optPosCountBadge');
+      if (badge) badge.innerText = `${optPositions.length} Position${optPositions.length === 1 ? '' : 's'} Selected`;
+
+      if (!container) return;
+
+      if (!optPositions.length) {
+        container.innerHTML = `<span class="text-xs text-slate-500 italic">No positions selected. Click a button below to add positions.</span>`;
+        return;
+      }
+
+      container.innerHTML = optPositions.map((pos, idx) => `
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-black shadow-sm">
+          <span>[ ${pos} ]</span>
+          <button onclick="removeOptPosition(${idx})" class="text-rose-400 hover:text-rose-300 font-bold ml-1">✕</button>
+        </span>
+      `).join('');
+    }
+
+    function addOptPosition(pos) {
+      optPositions.push(pos);
+      renderOptPositions();
+    }
+
+    function removeOptPosition(idx) {
+      optPositions.splice(idx, 1);
+      renderOptPositions();
+    }
+
+    function resetOptimizerForm() {
+      optPositions = ["RW", "CB", "DM"];
+      document.getElementById('optBudgetInput').value = 100;
+      updateBudgetDisplay(100);
+      document.getElementById('optMaxAge').value = 28;
+      document.getElementById('optAgeValLabel').innerText = 28;
+      document.getElementById('optMinRating').value = 75;
+      document.getElementById('optRatingValLabel').innerText = 75;
+      renderOptPositions();
+      
+      document.getElementById('optEmptyState').classList.remove('hidden');
+      document.getElementById('optLoadingState').classList.add('hidden');
+      document.getElementById('optErrorBanner').classList.add('hidden');
+      document.getElementById('optResultsContainer').classList.add('hidden');
+    }
+
+    function optScenarioChanged() {
+      if (currentOptResult) {
+        runBudgetOptimizer();
+      }
+    }
+
+    async function runBudgetOptimizer() {
+      const budget = parseFloat(document.getElementById('optBudgetInput').value) || 100.0;
+      const scenarioEl = document.querySelector('input[name="optScenario"]:checked');
+      const scenario = scenarioEl ? scenarioEl.value : 'balanced';
+      const maxAge = parseInt(document.getElementById('optMaxAge').value) || null;
+      const minRating = parseFloat(document.getElementById('optMinRating').value) || null;
+
+      document.getElementById('optEmptyState').classList.add('hidden');
+      document.getElementById('optErrorBanner').classList.add('hidden');
+      document.getElementById('optResultsContainer').classList.add('hidden');
+      document.getElementById('optLoadingState').classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/scout/optimizer/solve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            budget: budget,
+            positions: optPositions,
+            scenario: scenario,
+            max_age: maxAge,
+            min_rating: minRating
+          })
+        });
+
+        const data = await res.json();
+        currentOptResult = data;
+        document.getElementById('optLoadingState').classList.add('hidden');
+
+        if (!data.success) {
+          renderOptError(data);
+        } else {
+          renderOptResults(data);
+        }
+      } catch (err) {
+        console.error("Optimizer Error:", err);
+        document.getElementById('optLoadingState').classList.add('hidden');
+      }
+    }
+
+    function renderOptError(data) {
+      document.getElementById('optErrorCurrentBudget').innerText = `€${data.budget}M`;
+      document.getElementById('optErrorMinBudget').innerText = `€${data.estimated_min_required}M`;
+      const suggestionsList = document.getElementById('optErrorSuggestionsList');
+      suggestionsList.innerHTML = (data.suggestions || []).map(s => `<li>${s}</li>`).join('');
+      document.getElementById('optErrorBanner').classList.remove('hidden');
+    }
+
+    function increaseBudgetShortcut() {
+      const current = parseFloat(document.getElementById('optBudgetInput').value) || 100;
+      const newVal = current + 25;
+      document.getElementById('optBudgetInput').value = newVal;
+      updateBudgetDisplay(newVal);
+      runBudgetOptimizer();
+    }
+
+    function relaxFiltersShortcut() {
+      document.getElementById('optMaxAge').value = 35;
+      document.getElementById('optAgeValLabel').innerText = 35;
+      document.getElementById('optMinRating').value = 60;
+      document.getElementById('optRatingValLabel').innerText = 60;
+      runBudgetOptimizer();
+    }
+
+    function renderOptResults(data) {
+      const best = data.best_strategy;
+      const bestCard = document.getElementById('optBestValueCard');
+
+      bestCard.innerHTML = `
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-emerald-500/30 pb-4">
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-extrabold text-xs border border-emerald-500/40 uppercase tracking-wider mb-1">
+              ${best.badge}
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-white">${best.title}</h3>
+            <p class="text-xs text-slate-300 mt-0.5">${best.description}</p>
+          </div>
+          <div class="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-2xl border border-slate-800">
+            <div>
+              <span class="text-[10px] text-slate-400 uppercase font-bold block">Value Score</span>
+              <span class="text-lg font-black text-emerald-400">${best.value_score}<span class="text-xs font-normal text-slate-400">/100</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+            <span class="text-[10px] uppercase font-bold text-slate-400">Total Cost</span>
+            <div class="text-base sm:text-lg font-black text-emerald-400 mt-0.5">€${best.total_cost}M</div>
+          </div>
+          <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+            <span class="text-[10px] uppercase font-bold text-slate-400">Remaining Budget</span>
+            <div class="text-base sm:text-lg font-black text-cyan-400 mt-0.5">€${best.remaining_budget}M</div>
+          </div>
+          <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+            <span class="text-[10px] uppercase font-bold text-slate-400">Avg Rating</span>
+            <div class="text-base sm:text-lg font-black text-white mt-0.5">${best.avg_quality}</div>
+          </div>
+          <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+            <span class="text-[10px] uppercase font-bold text-slate-400">Avg Potential</span>
+            <div class="text-base sm:text-lg font-black text-purple-400 mt-0.5">${best.avg_potential}</div>
+          </div>
+        </div>
+
+        <!-- Budget Progress Bar -->
+        <div class="space-y-1.5 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
+          <div class="flex justify-between text-xs font-bold">
+            <span class="text-slate-300">€${best.total_cost}M / €${data.budget}M Utilized</span>
+            <span class="text-emerald-400">${best.budget_used_pct}% Budget Used • €${best.remaining_budget}M Remaining</span>
+          </div>
+          <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden border border-slate-700">
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500" style="width: ${best.budget_used_pct}%"></div>
+          </div>
+        </div>
+
+        <!-- Players Breakdown List -->
+        <div class="space-y-2.5">
+          <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider block">Recommended Player Combination</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            ${best.players.map(p => `
+              <div onclick="loadSinglePlayer(${p.id}); setMode('single');" class="glass-card p-3 rounded-2xl border border-slate-700/60 bg-slate-900/80 hover:border-emerald-500/50 transition cursor-pointer flex items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="relative flex-shrink-0">
+                    <img id="opt-best-face-${p.id}" src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" class="w-9 h-9 rounded-xl object-cover bg-slate-800 border border-slate-700" onerror="handleFaceFallback(this)">
+                    <span class="absolute -bottom-1 -right-1 bg-emerald-500 text-black text-[8px] font-black px-1 rounded uppercase">${p.slot}</span>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="font-extrabold text-xs text-white flex items-center gap-1 truncate">
+                      <span class="truncate">${p.name}</span>
+                      <img src="${getFlagUrl(p.country_code)}" class="w-4 h-3 rounded-sm flex-shrink-0 inline border border-slate-700" alt="Country">
+                    </div>
+                    <div class="text-[10px] text-slate-400 truncate flex items-center gap-1 mt-0.5">
+                      <img src="${p.club_logo}" class="w-3 h-3 object-contain flex-shrink-0 inline">
+                      <span class="truncate">${p.team} • ${p.age}y</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <div class="text-xs font-black text-emerald-400">€${p.estimated_value}M</div>
+                  <div class="text-[9px] text-slate-400 font-mono">Rt: <span class="text-white font-bold">${p.rating}</span></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      best.players.forEach(p => {
+        const img = document.getElementById(`opt-best-face-${p.id}`);
+        if (img) loadPlayerPortrait(p.name, img);
+      });
+
+      const otherContainer = document.getElementById('optOtherStrategiesList');
+      const otherStrategies = data.strategies.slice(1);
+
+      if (!otherStrategies.length) {
+        otherContainer.innerHTML = `<div class="col-span-2 text-xs text-slate-400 text-center py-4">No alternative strategies found within budget.</div>`;
+      } else {
+        otherContainer.innerHTML = otherStrategies.map((st, idx) => `
+          <div class="glass-card p-4 rounded-2xl border border-slate-800 space-y-3 hover:border-slate-700 transition">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+              <div>
+                <span class="text-[10px] font-bold uppercase text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">${st.badge}</span>
+                <h4 class="text-xs font-bold text-white mt-1">${st.title}</h4>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-black text-emerald-400">€${st.total_cost}M</span>
+                <span class="block text-[9px] text-slate-400">Val: <strong class="text-white">${st.value_score}</strong></span>
+              </div>
+            </div>
+
+            <div class="space-y-1.5">
+              ${st.players.map(p => `
+                <div onclick="loadSinglePlayer(${p.id}); setMode('single');" class="flex items-center justify-between text-xs p-1.5 rounded-lg bg-slate-900/60 hover:bg-slate-800 cursor-pointer transition">
+                  <div class="flex items-center gap-2 truncate">
+                    <span class="text-[9px] font-black bg-slate-800 text-emerald-400 px-1 rounded uppercase">${p.slot}</span>
+                    <span class="font-bold text-white truncate">${p.name}</span>
+                    <span class="text-[10px] text-slate-400 truncate">(${p.team})</span>
+                  </div>
+                  <span class="font-bold text-emerald-400 text-xs">€${p.estimated_value}M</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="space-y-1">
+              <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full" style="width: ${st.budget_used_pct}%"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-slate-400 font-semibold">
+                <span>Used: €${st.total_cost}M (${st.budget_used_pct}%)</span>
+                <span class="text-cyan-400">Rem: €${st.remaining_budget}M</span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      renderOptComparisonMatrix(data.strategies);
+
+      document.getElementById('optResultsContainer').classList.remove('hidden');
+    }
+
+    function renderOptComparisonMatrix(strategies) {
+      const container = document.getElementById('optComparisonMatrix');
+      container.innerHTML = `
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 font-bold">
+              <th class="py-2 px-3">Metric</th>
+              ${strategies.map(s => `<th class="py-2 px-3 text-center">${s.badge}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 text-slate-300">
+            <tr>
+              <td class="py-2 px-3 font-bold text-slate-400">Total Cost</td>
+              ${strategies.map(s => `<td class="py-2 px-3 text-center font-extrabold text-emerald-400">€${s.total_cost}M</td>`).join('')}
+            </tr>
+            <tr>
+              <td class="py-2 px-3 font-bold text-slate-400">Remaining Budget</td>
+              ${strategies.map(s => `<td class="py-2 px-3 text-center font-bold text-cyan-400">€${s.remaining_budget}M</td>`).join('')}
+            </tr>
+            <tr>
+              <td class="py-2 px-3 font-bold text-slate-400">Avg Player Rating</td>
+              ${strategies.map(s => `<td class="py-2 px-3 text-center font-bold text-white">${s.avg_quality}</td>`).join('')}
+            </tr>
+            <tr>
+              <td class="py-2 px-3 font-bold text-slate-400">Avg Potential</td>
+              ${strategies.map(s => `<td class="py-2 px-3 text-center font-bold text-purple-400">${s.avg_potential}</td>`).join('')}
+            </tr>
+            <tr>
+              <td class="py-2 px-3 font-bold text-slate-400">Value Efficiency Score</td>
+              ${strategies.map(s => `<td class="py-2 px-3 text-center font-black text-emerald-400 text-sm">${s.value_score}/100</td>`).join('')}
+            </tr>
+          </tbody>
+        </table>
+      `;
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       loadSinglePlayer(1);
+      renderOptPositions();
     });
   </script>
 </body>
