@@ -12,42 +12,68 @@
     .glass-card { background: rgba(18, 24, 38, 0.85); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
     .hero-gradient { background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.05) 100%); }
     input[type=range] { accent-color: #10b981; }
+
+    /* Custom scrollbars for clean mobile touch scrolling */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 20, 28, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.4); }
   </style>
 </head>
-<body class="text-slate-100 min-h-screen">
+<body class="text-slate-100 min-h-screen overflow-x-hidden">
 
   <!-- Header -->
   <header class="border-b border-slate-800/80 bg-[#0f141c]/90 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3 cursor-pointer" onclick="setMode('single')">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5 sm:gap-3 cursor-pointer" onclick="setMode('single')">
         <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-lg shadow-md shadow-emerald-500/20">⚽</div>
         <div>
-          <span class="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">ScoutVision</span>
-          <span class="block text-xs uppercase tracking-wider text-emerald-400 font-semibold -mt-0.5">Data. Players. Future.</span>
+          <span class="text-base sm:text-lg font-extrabold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">ScoutVision</span>
+          <span class="block text-[10px] sm:text-xs uppercase tracking-wider text-emerald-400 font-semibold -mt-0.5">Data. Players. Future.</span>
         </div>
       </div>
       
-      <!-- Nav Modes -->
-      <div class="flex items-center bg-slate-900/90 border border-slate-800 p-1 rounded-xl gap-1">
+      <!-- Desktop Nav Modes -->
+      <div class="hidden md:flex items-center bg-slate-900/90 border border-slate-800 p-1 rounded-xl gap-1">
         <button id="singleModeBtn" onclick="setMode('single')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition">Player Profile</button>
         <button id="compareModeBtn" onclick="setMode('compare')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">⚔️ Comparison</button>
         <button id="replaceModeBtn" onclick="setMode('replace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🔎 Find Replacement</button>
         <button id="squadModeBtn" onclick="setMode('squad')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🛡️ Squad Builder</button>
       </div>
 
+      <!-- Mobile Hamburger Button -->
+      <button id="mobileNavToggle" onclick="toggleMobileMenu()" aria-label="Toggle Navigation Menu" class="md:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white focus:outline-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+
+    <!-- Mobile Dropdown Drawer -->
+    <div id="mobileNavMenu" class="hidden md:hidden border-t border-slate-800 bg-[#0f141c] px-4 py-3 space-y-2 shadow-2xl">
+      <button id="mobileSingleModeBtn" onclick="setMode('single'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2">
+        <span>👤</span> Player Profile
+      </button>
+      <button id="mobileCompareModeBtn" onclick="setMode('compare'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2">
+        <span>⚔️</span> Comparison Mode
+      </button>
+      <button id="mobileReplaceModeBtn" onclick="setMode('replace'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2">
+        <span>🔎</span> Find Replacement
+      </button>
+      <button id="mobileSquadModeBtn" onclick="setMode('squad'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2">
+        <span>🛡️</span> Squad Builder
+      </button>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-6 py-6">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
     
     <!-- Top Search Bar (Single Scout - Constrained Width & Elevated Dropdown) -->
-    <div id="singleSearchContainer" class="max-w-2xl mx-auto glass-card p-3.5 rounded-2xl mb-6">
+    <div id="singleSearchContainer" class="max-w-2xl mx-auto glass-card p-3 sm:p-3.5 rounded-2xl mb-4 sm:mb-6">
       <div class="relative w-full">
         <input 
           id="searchInput" 
           type="text" 
           placeholder="Search by player name (e.g., Goretzka, Bellingham, Bruno Fernandes, Saka)..."
-          class="w-full bg-[#141a24] border border-slate-700/60 rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none focus:border-emerald-500 transition placeholder-slate-500"
+          class="w-full bg-[#141a24] border border-slate-700/60 rounded-xl px-4 py-2.5 pl-10 text-xs sm:text-sm focus:outline-none focus:border-emerald-500 transition placeholder-slate-500"
           oninput="handleSearch(this.value, 'single')"
         />
         <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -55,10 +81,9 @@
       </div>
     </div>
 
-
     <!-- Comparison Selectors -->
-    <div id="compareSearchContainer" class="hidden glass-card p-4 rounded-2xl mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div id="compareSearchContainer" class="hidden glass-card p-3.5 sm:p-4 rounded-2xl mb-4 sm:mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         <div class="relative">
           <label class="text-[10px] font-bold text-emerald-400 mb-1 block uppercase">Player 1</label>
           <input id="searchPlayerA" type="text" placeholder="Search Player 1..." class="w-full bg-[#141a24] border border-emerald-500/40 rounded-xl px-3 py-2 text-xs focus:outline-none" oninput="handleSearch(this.value, 'playerA')"/>
@@ -73,12 +98,12 @@
     </div>
 
     <!-- Replacement Filter Controls -->
-    <div id="replaceSearchContainer" class="hidden glass-card p-5 rounded-2xl mb-6 space-y-3">
+    <div id="replaceSearchContainer" class="hidden glass-card p-4 sm:p-5 rounded-2xl mb-4 sm:mb-6 space-y-3">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>🎯</span> Target Recruitment Parameters</h3>
-        <span id="targetPlayerBadge" class="text-xs font-semibold text-emerald-400">Target: Selected</span>
+        <h3 class="text-xs sm:text-sm font-bold text-white flex items-center gap-2"><span>🎯</span> Target Recruitment Parameters</h3>
+        <span id="targetPlayerBadge" class="text-[11px] sm:text-xs font-semibold text-emerald-400 truncate max-w-[180px] sm:max-w-none">Target: Selected</span>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">Max Age</span><span id="ageLabel" class="text-emerald-400 font-bold">26 yrs</span></div>
           <input id="maxAgeInput" type="range" min="18" max="34" value="26" class="w-full" oninput="updateReplacementFilters()">
@@ -103,31 +128,31 @@
     <div id="singleDashboard" class="space-y-6">
       
       <!-- HERO BANNER -->
-      <div class="glass-card hero-gradient p-6 rounded-3xl border border-slate-700/50 relative overflow-hidden">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+      <div class="glass-card hero-gradient p-4 sm:p-6 rounded-3xl border border-slate-700/50 relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-5 sm:gap-6 relative z-10">
           
-          <div class="flex items-center gap-5">
-            <div class="relative">
+          <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-5 w-full lg:w-auto">
+            <div class="relative flex-shrink-0">
               <img 
                 id="playerFaceImg" 
                 referrerpolicy="no-referrer"
                 src="" 
                 alt="Player Face" 
-                class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-emerald-500/30 bg-[#161d2b] shadow-xl"
+                class="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-emerald-500/30 bg-[#161d2b] shadow-xl"
                 onerror="handleFaceFallback(this)"
               />
-              <img id="countryFlagImg" src="https://flagcdn.com/28x21/eu.png" alt="Country" class="absolute -bottom-2 -right-2 w-7 h-5 rounded shadow-md border border-slate-700">
+              <img id="countryFlagImg" src="https://flagcdn.com/28x21/eu.png" alt="Country" class="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-6 h-4 sm:w-7 sm:h-5 rounded shadow-md border border-slate-700">
             </div>
 
             <div>
-              <div class="flex items-center gap-2">
-                <span id="playerPosBadge" class="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">MF</span>
-                <span id="playerArchetype" class="text-[11px] font-semibold text-slate-300 bg-slate-800/80 px-2.5 py-0.5 rounded-full border border-slate-700">Central Midfielder</span>
+              <div class="flex items-center justify-center sm:justify-start gap-2">
+                <span id="playerPosBadge" class="text-[10px] sm:text-[11px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">MF</span>
+                <span id="playerArchetype" class="text-[10px] sm:text-[11px] font-semibold text-slate-300 bg-slate-800/80 px-2.5 py-0.5 rounded-full border border-slate-700">Central Midfielder</span>
               </div>
-              <h1 id="playerName" class="text-3xl sm:text-4xl font-black text-white mt-1">Player Name</h1>
+              <h1 id="playerName" class="text-2xl sm:text-4xl font-black text-white mt-1">Player Name</h1>
               
-              <div class="flex items-center gap-2 mt-1.5 text-slate-300 text-sm">
-                <img id="clubCrestImg" src="https://cdn-icons-png.flaticon.com/512/53/53283.png" alt="Club Crest" class="w-5 h-5 object-contain">
+              <div class="flex items-center justify-center sm:justify-start gap-2 mt-1.5 text-slate-300 text-xs sm:text-sm">
+                <img id="clubCrestImg" src="https://cdn-icons-png.flaticon.com/512/53/53283.png" alt="Club Crest" class="w-4 h-4 sm:w-5 sm:h-5 object-contain">
                 <span id="playerTeamName" class="font-bold">Club</span>
                 <span class="text-slate-500">•</span>
                 <span id="playerLeague" class="text-slate-400 text-xs">Top 5 European</span>
@@ -136,22 +161,22 @@
           </div>
 
           <!-- Bio Metric Grid -->
-          <div class="grid grid-cols-4 gap-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800 text-center w-full md:w-auto">
-            <div class="px-3">
-              <div class="text-xs uppercase font-bold text-slate-400">Age</div>
-              <div id="playerAgeVal" class="text-lg font-black text-white mt-0.5">24</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 bg-slate-900/60 p-3 sm:p-4 rounded-2xl border border-slate-800 text-center w-full lg:w-auto">
+            <div class="px-2 sm:px-3 py-1">
+              <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Age</div>
+              <div id="playerAgeVal" class="text-base sm:text-lg font-black text-white mt-0.5">24</div>
             </div>
-            <div class="px-3 border-l border-slate-800">
-              <div class="text-xs uppercase font-bold text-slate-400">Market Value</div>
-              <div id="playerValVal" class="text-lg font-black text-emerald-400 mt-0.5">€0M</div>
+            <div class="px-2 sm:px-3 py-1 sm:border-l border-slate-800">
+              <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Market Value</div>
+              <div id="playerValVal" class="text-base sm:text-lg font-black text-emerald-400 mt-0.5">€0M</div>
             </div>
-            <div class="px-3 border-l border-slate-800">
-              <div class="text-xs uppercase font-bold text-slate-400">Minutes</div>
-              <div id="playerMinVal" class="text-lg font-black text-white mt-0.5">0</div>
+            <div class="px-2 sm:px-3 py-1 border-t sm:border-t-0 sm:border-l border-slate-800">
+              <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Minutes</div>
+              <div id="playerMinVal" class="text-base sm:text-lg font-black text-white mt-0.5">0</div>
             </div>
-            <div class="px-3 border-l border-slate-800 flex flex-col justify-center items-center">
-              <div class="text-xs uppercase font-bold text-slate-400">Actions</div>
-              <button onclick="initiateReplacementMode()" class="mt-1 text-xs font-extrabold bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black px-3.5 py-1.5 rounded-xl shadow-lg shadow-emerald-500/25 transition">Replace</button>
+            <div class="px-2 sm:px-3 py-1 border-t sm:border-t-0 sm:border-l border-slate-800 flex flex-col justify-center items-center">
+              <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Actions</div>
+              <button onclick="initiateReplacementMode()" class="mt-1 text-xs font-extrabold bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black px-3 py-1.5 rounded-xl shadow-lg shadow-emerald-500/25 transition min-h-[32px]">Replace</button>
             </div>
           </div>
 
@@ -163,17 +188,17 @@
         
         <!-- Radar & Per 90 Bars -->
         <div class="lg:col-span-7 space-y-6">
-          <div class="glass-card p-6 rounded-2xl">
+          <div class="glass-card p-4 sm:p-6 rounded-2xl">
             <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-              <h2 class="text-sm font-bold text-white flex items-center gap-2"><span>📊</span> Performance Percentiles</h2>
-              <span class="text-xs text-slate-400">Ranked vs Position</span>
+              <h2 class="text-xs sm:text-sm font-bold text-white flex items-center gap-2"><span>📊</span> Performance Percentiles</h2>
+              <span class="text-[11px] sm:text-xs text-slate-400">Ranked vs Position</span>
             </div>
-            <div class="w-full max-w-[390px] mx-auto my-4">
+            <div class="w-full max-w-[320px] sm:max-w-[390px] mx-auto my-4">
               <canvas id="singleRadarChart"></canvas>
             </div>
           </div>
 
-          <div class="glass-card p-6 rounded-2xl space-y-3.5">
+          <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-3.5">
             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Key Statistics (Per 90)</h2>
             <div id="keyStatsHorizontal" class="space-y-2.5"></div>
           </div>
@@ -182,17 +207,17 @@
         <!-- Twins & Dossier -->
         <div class="lg:col-span-5 space-y-6">
           
-          <div class="glass-card p-6 rounded-2xl">
+          <div class="glass-card p-4 sm:p-6 rounded-2xl">
             <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-              <h2 class="text-sm font-bold text-white flex items-center gap-2"><span>🎯</span> Statistical Twins</h2>
-              <span class="text-xs text-slate-400">Cosine Similarity</span>
+              <h2 class="text-xs sm:text-sm font-bold text-white flex items-center gap-2"><span>🎯</span> Statistical Twins</h2>
+              <span class="text-[11px] sm:text-xs text-slate-400">Cosine Similarity</span>
             </div>
             <div id="similarList" class="space-y-3"></div>
           </div>
 
-          <div class="glass-card p-6 rounded-2xl space-y-5">
+          <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-5">
             <div class="border-b border-slate-800 pb-3">
-              <h2 class="text-sm font-bold text-white flex items-center gap-2"><span>📋</span> Scouting Intelligence</h2>
+              <h2 class="text-xs sm:text-sm font-bold text-white flex items-center gap-2"><span>📋</span> Scouting Intelligence</h2>
             </div>
 
             <div>
@@ -213,31 +238,33 @@
 
     <!-- VIEW 2: COMPARISON VIEW -->
     <div id="compareDashboard" class="hidden space-y-6">
-      <div class="glass-card p-6 rounded-2xl">
-        <div class="grid grid-cols-11 items-center text-center">
-          <div class="col-span-5 text-left flex items-center gap-4">
-            <img id="compFaceA" referrerpolicy="no-referrer" src="" class="w-14 h-14 rounded-xl object-cover bg-slate-800 border border-slate-700" onerror="handleFaceFallback(this)">
+      <div class="glass-card p-4 sm:p-6 rounded-2xl">
+        <div class="grid grid-cols-1 sm:grid-cols-11 items-center text-center gap-4 sm:gap-0">
+          <div class="sm:col-span-5 text-center sm:text-left flex items-center justify-center sm:justify-start gap-3 sm:gap-4">
+            <img id="compFaceA" referrerpolicy="no-referrer" src="" class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover bg-slate-800 border border-slate-700" onerror="handleFaceFallback(this)">
             <div>
-              <h2 id="compNameA" class="text-2xl font-black text-emerald-400">Player 1</h2>
+              <h2 id="compNameA" class="text-xl sm:text-2xl font-black text-emerald-400">Player 1</h2>
               <p id="compTeamA" class="text-xs text-slate-400">Club</p>
             </div>
           </div>
-          <div class="col-span-1 text-center font-black text-slate-500">VS</div>
-          <div class="col-span-5 text-right flex items-center justify-end gap-4">
-            <div>
-              <h2 id="compNameB" class="text-2xl font-black text-cyan-400">Player 2</h2>
+          <div class="sm:col-span-1 text-center font-black text-slate-500 text-sm sm:text-base py-1 sm:py-0">VS</div>
+          <div class="sm:col-span-5 text-center sm:text-right flex items-center justify-center sm:justify-end gap-3 sm:gap-4">
+            <div class="order-2 sm:order-1">
+              <h2 id="compNameB" class="text-xl sm:text-2xl font-black text-cyan-400">Player 2</h2>
               <p id="compTeamB" class="text-xs text-slate-400">Club</p>
             </div>
-            <img id="compFaceB" referrerpolicy="no-referrer" src="" class="w-14 h-14 rounded-xl object-cover bg-slate-800 border border-slate-700" onerror="handleFaceFallback(this)">
+            <img id="compFaceB" referrerpolicy="no-referrer" src="" class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover bg-slate-800 border border-slate-700 order-1 sm:order-2" onerror="handleFaceFallback(this)">
           </div>
         </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-6 glass-card p-6 rounded-2xl">
-          <canvas id="compareRadarChart"></canvas>
+        <div class="lg:col-span-6 glass-card p-4 sm:p-6 rounded-2xl">
+          <div class="w-full max-w-[320px] sm:max-w-[390px] mx-auto">
+            <canvas id="compareRadarChart"></canvas>
+          </div>
         </div>
-        <div class="lg:col-span-6 glass-card p-6 rounded-2xl space-y-4">
+        <div class="lg:col-span-6 glass-card p-4 sm:p-6 rounded-2xl space-y-4">
           <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2">Tale of the Tape</h3>
           <div id="taleOfTapeRows" class="space-y-2 text-xs"></div>
         </div>
@@ -246,9 +273,9 @@
 
     <!-- VIEW 3: FIND REPLACEMENT -->
     <div id="replaceDashboard" class="hidden space-y-6">
-      <div class="glass-card p-6 rounded-2xl">
+      <div class="glass-card p-4 sm:p-6 rounded-2xl">
         <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-          <h3 class="text-base font-bold text-white">Shortlisted Recruitment Targets</h3>
+          <h3 class="text-sm sm:text-base font-bold text-white">Shortlisted Recruitment Targets</h3>
           <span id="targetsCount" class="text-xs text-emerald-400 font-semibold">Targets Found</span>
         </div>
         <div id="replacementCardsList" class="space-y-3"></div>
@@ -259,16 +286,16 @@
     <div id="squadDashboard" class="hidden space-y-6">
       
       <!-- Squad Control Header -->
-      <div class="glass-card p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-700/60 shadow-xl">
+      <div class="glass-card p-4 sm:p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-700/60 shadow-xl">
         <div class="flex items-center gap-3 w-full md:w-auto">
-          <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-xl shadow-lg shadow-emerald-500/20">🛡️</div>
-          <div>
-            <input id="squadNameInput" type="text" value="MY CLUB" class="bg-transparent text-xl font-black text-white border-b border-dashed border-slate-600 focus:border-emerald-500 focus:outline-none px-1 py-0.5 tracking-tight" onchange="triggerSquadUpdate()">
-            <span class="block text-[10px] uppercase tracking-widest text-emerald-400 font-bold">Fictional Squad Builder</span>
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-black text-black text-xl shadow-lg shadow-emerald-500/20 flex-shrink-0">🛡️</div>
+          <div class="min-w-0 flex-1">
+            <input id="squadNameInput" type="text" value="MY CLUB" class="bg-transparent text-lg sm:text-xl font-black text-white border-b border-dashed border-slate-600 focus:border-emerald-500 focus:outline-none px-1 py-0.5 tracking-tight w-full" onchange="triggerSquadUpdate()">
+            <span class="block text-[10px] uppercase tracking-widest text-emerald-400 font-bold mt-0.5">Fictional Squad Builder</span>
           </div>
         </div>
 
-        <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+        <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full md:w-auto justify-start sm:justify-end">
           <div class="flex items-center gap-2 bg-[#141a24] border border-slate-700 px-3 py-1.5 rounded-xl">
             <span class="text-xs text-slate-400 font-semibold">Formation</span>
             <select id="formationSelect" onchange="handleFormationChange(this.value)" class="bg-transparent text-xs font-extrabold text-emerald-400 focus:outline-none cursor-pointer">
@@ -294,45 +321,45 @@
         
         <!-- PITCH & LINEUP -->
         <div class="lg:col-span-7 space-y-6">
-          <div class="glass-card p-5 rounded-3xl relative overflow-hidden border border-emerald-500/30 shadow-2xl bg-gradient-to-b from-[#0a1518] via-[#0b181e] to-[#070e13]">
+          <div class="glass-card p-3.5 sm:p-5 rounded-3xl relative overflow-hidden border border-emerald-500/30 shadow-2xl bg-gradient-to-b from-[#0a1518] via-[#0b181e] to-[#070e13]">
             
             <!-- Pitch Visual Markings overlay -->
             <div class="absolute inset-0 pointer-events-none opacity-20 flex flex-col justify-between p-4">
               <div class="w-full h-1/2 border-2 border-emerald-400/40 rounded-t-2xl relative">
-                <div class="w-36 h-20 border-2 border-emerald-400/40 absolute top-0 left-1/2 -translate-x-1/2 rounded-b-xl"></div>
-                <div class="w-16 h-7 border-2 border-emerald-400/40 absolute top-0 left-1/2 -translate-x-1/2 rounded-b-md"></div>
+                <div class="w-28 sm:w-36 h-16 sm:h-20 border-2 border-emerald-400/40 absolute top-0 left-1/2 -translate-x-1/2 rounded-b-xl"></div>
+                <div class="w-12 sm:w-16 h-5 sm:h-7 border-2 border-emerald-400/40 absolute top-0 left-1/2 -translate-x-1/2 rounded-b-md"></div>
               </div>
               <div class="w-full border-t-2 border-emerald-400/40 absolute top-1/2 left-0 right-0"></div>
-              <div class="w-24 h-24 border-2 border-emerald-400/40 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+              <div class="w-16 h-16 sm:w-24 sm:h-24 border-2 border-emerald-400/40 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
               <div class="w-full h-1/2 border-2 border-emerald-400/40 rounded-b-2xl relative">
-                <div class="w-36 h-20 border-2 border-emerald-400/40 absolute bottom-0 left-1/2 -translate-x-1/2 rounded-t-xl"></div>
-                <div class="w-16 h-7 border-2 border-emerald-400/40 absolute bottom-0 left-1/2 -translate-x-1/2 rounded-t-md"></div>
+                <div class="w-28 sm:w-36 h-16 sm:h-20 border-2 border-emerald-400/40 absolute bottom-0 left-1/2 -translate-x-1/2 rounded-t-xl"></div>
+                <div class="w-12 sm:w-16 h-5 sm:h-7 border-2 border-emerald-400/40 absolute bottom-0 left-1/2 -translate-x-1/2 rounded-t-md"></div>
               </div>
             </div>
 
             <div class="relative z-10 space-y-4">
               <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-                <span class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5"><span>🏟️</span> Starting XI Tactical Pitch</span>
+                <span class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5"><span>🏟️</span> Starting XI Pitch</span>
                 <span id="starterCountBadge" class="text-[10px] font-extrabold text-slate-300 bg-slate-900 px-2.5 py-0.5 rounded-full border border-slate-800">11/11 Active</span>
               </div>
 
               <!-- Pitch Slots Grid -->
-              <div id="pitchSlotsGrid" class="space-y-4 py-2 min-h-[460px] flex flex-col justify-between">
+              <div id="pitchSlotsGrid" class="space-y-3 sm:space-y-4 py-2 min-h-[420px] sm:min-h-[460px] flex flex-col justify-between overflow-x-auto pb-1">
                 <!-- Dynamically rendered pitch rows by JS -->
               </div>
             </div>
           </div>
 
           <!-- BENCH DRAWER -->
-          <div class="glass-card p-5 rounded-2xl space-y-3 border border-slate-800">
+          <div class="glass-card p-4 sm:p-5 rounded-2xl space-y-3 border border-slate-800">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
               <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2"><span>🪑</span> Squad Bench & Reserves</h3>
               <button onclick="openPlayerPicker('bench')" class="text-xs font-extrabold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                <span>＋ Add Reserve Player</span>
+                <span>＋ Add Reserve</span>
               </button>
             </div>
 
-            <div id="benchSlotsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div id="benchSlotsGrid" class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3">
               <!-- Dynamically rendered bench cards -->
             </div>
           </div>
@@ -343,7 +370,7 @@
         <div class="lg:col-span-5 space-y-6">
           
           <!-- Squad Analysis Panel -->
-          <div class="glass-card p-6 rounded-2xl space-y-5 border border-slate-700/60 shadow-xl">
+          <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-5 border border-slate-700/60 shadow-xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 class="text-sm font-black text-white flex items-center gap-2"><span>📈</span> Squad Analysis</h3>
               <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">Live Calculation</span>
@@ -408,8 +435,8 @@
           </div>
 
           <!-- WEAKNESS ALERT BANNER -->
-          <div id="weaknessAlertBanner" class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-300 shadow-xl flex items-start gap-3">
-            <div class="text-xl leading-none">⚠️</div>
+          <div id="weaknessAlertBanner" class="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/40 text-amber-300 shadow-xl flex items-start gap-3">
+            <div class="text-xl leading-none flex-shrink-0 mt-0.5">⚠️</div>
             <div>
               <div class="text-xs font-black uppercase tracking-wide text-amber-400" id="weaknessTitle">Squad weakness detected: Right-back depth</div>
               <p class="text-[11px] text-slate-300 mt-1" id="weaknessDesc">ScoutVision flagged insufficient backup depth in the Right-back role. Reinforcement candidates recommended below.</p>
@@ -417,10 +444,10 @@
           </div>
 
           <!-- SCOUTVISION RECOMMENDED CANDIDATES -->
-          <div class="glass-card p-6 rounded-2xl space-y-4 border border-slate-800 shadow-xl">
+          <div class="glass-card p-4 sm:p-6 rounded-2xl space-y-4 border border-slate-800 shadow-xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
-                <h3 class="text-xs font-extrabold text-white flex items-center gap-1.5"><span>🎯</span> ScoutVision Recommends Candidates</h3>
+                <h3 class="text-xs font-extrabold text-white flex items-center gap-1.5"><span>🎯</span> Recommended Candidates</h3>
                 <p class="text-[10px] text-slate-400 mt-0.5" id="recommendSubtext">Top targets to solve detected squad weakness</p>
               </div>
             </div>
@@ -436,14 +463,14 @@
     </div>
 
     <!-- PLAYER PICKER MODAL -->
-    <div id="playerPickerModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="glass-card max-w-lg w-full rounded-3xl p-6 border border-slate-700 shadow-2xl relative space-y-4 max-h-[85vh] flex flex-col">
+    <div id="playerPickerModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+      <div class="glass-card max-w-lg w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-700 shadow-2xl relative space-y-3 sm:space-y-4 max-h-[90vh] sm:max-h-[85vh] flex flex-col mx-1 sm:mx-0">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
-            <h3 class="text-sm font-extrabold text-white flex items-center gap-2"><span>⚽</span> Choose Player for <span id="pickerTargetSlotName" class="text-emerald-400 uppercase font-black">Position</span></h3>
+            <h3 class="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2"><span>⚽</span> Choose Player for <span id="pickerTargetSlotName" class="text-emerald-400 uppercase font-black">Position</span></h3>
             <p class="text-[10px] text-slate-400">Search over 2,800 top European league players</p>
           </div>
-          <button onclick="closePlayerPicker()" class="text-slate-400 hover:text-white font-black text-lg px-2 py-0.5 rounded-lg bg-slate-800/80">✕</button>
+          <button onclick="closePlayerPicker()" class="text-slate-400 hover:text-white font-black text-lg px-2.5 py-1 rounded-lg bg-slate-800/80">✕</button>
         </div>
 
         <div class="space-y-2">
@@ -455,7 +482,7 @@
             oninput="handlePickerSearch(this.value)"
           />
 
-          <div class="flex items-center gap-1.5 text-[11px]">
+          <div class="flex items-center flex-wrap gap-1.5 text-[11px]">
             <button id="posFilterAll" onclick="filterPickerPos('')" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-black font-bold">ALL</button>
             <button id="posFilterDF" onclick="filterPickerPos('DF')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold hover:bg-slate-700">DF</button>
             <button id="posFilterMF" onclick="filterPickerPos('MF')" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold hover:bg-slate-700">MF</button>
@@ -483,6 +510,17 @@
 
     // Cache to prevent duplicate API queries
     const faceCache = {};
+
+    function toggleMobileMenu(forceState) {
+      const menu = document.getElementById('mobileNavMenu');
+      if (!menu) return;
+      if (typeof forceState === 'boolean') {
+        if (forceState) menu.classList.remove('hidden');
+        else menu.classList.add('hidden');
+      } else {
+        menu.classList.toggle('hidden');
+      }
+    }
 
     function slugify(text) {
       return text
@@ -533,7 +571,6 @@
       }
     }
 
-    // Muted dark fallback avatar to avoid competing with data scores (Fix #18)
     function handleFaceFallback(img) {
       const name = img.alt || "Player";
       img.onerror = null;
@@ -564,27 +601,37 @@
       const replaceBtn = document.getElementById('replaceModeBtn');
       const squadBtn = document.getElementById('squadModeBtn');
 
+      const mobSingleBtn = document.getElementById('mobileSingleModeBtn');
+      const mobCompareBtn = document.getElementById('mobileCompareModeBtn');
+      const mobReplaceBtn = document.getElementById('mobileReplaceModeBtn');
+      const mobSquadBtn = document.getElementById('mobileSquadModeBtn');
+
       [singleDash, compareDash, replaceDash, squadDash, singleSearch, compareSearch, replaceSearch].forEach(el => el && el.classList.add('hidden'));
       [singleBtn, compareBtn, replaceBtn, squadBtn].forEach(b => b && (b.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition"));
+      [mobSingleBtn, mobCompareBtn, mobReplaceBtn, mobSquadBtn].forEach(b => b && (b.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2"));
 
       if (mode === 'single') {
         singleDash.classList.remove('hidden');
         singleSearch.classList.remove('hidden');
         singleBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition";
+        if (mobSingleBtn) mobSingleBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2";
       } else if (mode === 'compare') {
         compareDash.classList.remove('hidden');
         compareSearch.classList.remove('hidden');
         compareBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition";
+        if (mobCompareBtn) mobCompareBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2";
         renderComparison();
       } else if (mode === 'replace') {
         replaceDash.classList.remove('hidden');
         replaceSearch.classList.remove('hidden');
         replaceBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
+        if (mobReplaceBtn) mobReplaceBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2";
         if (!targetReplacementPlayer) targetReplacementPlayer = activePlayerA || { id: 1 };
         loadReplacementDashboard(targetReplacementPlayer.id);
       } else if (mode === 'squad') {
         squadDash.classList.remove('hidden');
         squadBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500 text-black transition";
+        if (mobSquadBtn) mobSquadBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2";
         if (!currentSquad.starting_xi || Object.keys(currentSquad.starting_xi).length === 0) {
           loadPresetSquad();
         }
@@ -611,14 +658,14 @@
       } else {
         resultsDiv.innerHTML = players.slice(0, 8).map(p => `
           <div onclick="selectSearchMatch(${p.id}, '${target}')" class="px-3.5 py-2 hover:bg-slate-800/90 cursor-pointer flex justify-between items-center border-b border-slate-800/40 last:border-0">
-            <div class="flex items-center gap-2.5">
-              <img src="${p.club_logo}" class="w-4 h-4 object-contain">
-              <div>
-                <div class="font-bold text-xs text-white">${p.name}</div>
-                <div class="text-[10px] text-slate-400">${p.team} • ${p.position}</div>
+            <div class="flex items-center gap-2.5 min-w-0">
+              <img src="${p.club_logo}" class="w-4 h-4 object-contain flex-shrink-0">
+              <div class="min-w-0 flex-1">
+                <div class="font-bold text-xs text-white truncate">${p.name}</div>
+                <div class="text-[10px] text-slate-400 truncate">${p.team} • ${p.position}</div>
               </div>
             </div>
-            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">€${p.estimated_value}M</span>
+            <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded flex-shrink-0 ml-2">€${p.estimated_value}M</span>
           </div>
         `).join('');
       }
@@ -692,22 +739,20 @@
       document.getElementById('clubCrestImg').src = p.club_logo;
       document.getElementById('countryFlagImg').src = getFlagUrl(p.country_code);
 
-      // Clean 6-8 label mapping for radar chart (Fix #11)
       const labels = Object.keys(p.stats).map(k => METRIC_TITLE_MAP[k] || k.replace('_p90', '').replace('_', ' '));
       const percentiles = Object.values(p.stats).map(s => s.percentile);
       renderSingleRadar(labels, percentiles);
 
-      // Stat labels right-aligned (Fix #12 & #14), Title Case (Fix #5), with per-90 raw + percentile rank (Fix #13)
       const statsContainer = document.getElementById('keyStatsHorizontal');
       statsContainer.innerHTML = Object.entries(p.stats).map(([k, v]) => {
         const title = METRIC_TITLE_MAP[k] || k.replace('_p90', '').replace('_', ' ');
         return `
           <div class="flex items-center justify-between text-xs py-0.5">
-            <span class="text-slate-300 w-44 text-right pr-3 font-semibold text-xs truncate">${title}</span>
-            <div class="flex-1 mx-2 bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700/50">
+            <span class="text-slate-300 w-24 xs:w-32 sm:w-44 text-right pr-2 sm:pr-3 font-semibold text-[11px] sm:text-xs truncate" title="${title}">${title}</span>
+            <div class="flex-1 mx-1.5 sm:mx-2 bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700/50">
               <div class="bg-gradient-to-r from-teal-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: ${v.percentile}%"></div>
             </div>
-            <span class="text-white font-bold font-mono text-xs w-28 text-right">${v.raw_value} <span class="text-slate-400 font-normal text-[11px]">(${v.percentile}th)</span></span>
+            <span class="text-white font-bold font-mono text-[11px] sm:text-xs w-20 sm:w-28 text-right whitespace-nowrap">${v.raw_value} <span class="text-slate-400 font-normal text-[10px] sm:text-[11px]">(${v.percentile}th)</span></span>
           </div>
         `;
       }).join('');
@@ -745,6 +790,8 @@
           }]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: true,
           scales: {
             r: {
               min: 0,
@@ -767,35 +814,34 @@
         return;
       }
 
-      // Enhanced flag size (Fix #7), muted fallback avatar (Fix #18), explicit comparison button (Fix #10 & #17)
       container.innerHTML = similars.map((p, idx) => `
-        <div class="p-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 transition flex items-center justify-between">
-          <div onclick="loadSinglePlayer(${p.id})" class="flex items-center gap-3 cursor-pointer flex-1">
-            <span class="text-xs font-bold text-slate-500 w-4">${idx + 1}</span>
+        <div class="p-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 transition flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
+          <div onclick="loadSinglePlayer(${p.id})" class="flex items-center gap-2.5 sm:gap-3 cursor-pointer flex-1 min-w-0 w-full xs:w-auto">
+            <span class="text-xs font-bold text-slate-500 w-4 flex-shrink-0">${idx + 1}</span>
             <img 
               id="twin-face-${p.id}"
               referrerpolicy="no-referrer"
               src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
               alt="${p.name}" 
-              class="w-9 h-9 rounded-lg object-cover bg-slate-800 border border-slate-700/50" 
+              class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-cover bg-slate-800 border border-slate-700/50 flex-shrink-0" 
               onerror="handleFaceFallback(this)"
             />
-            <div>
-              <div class="font-bold text-xs text-white flex items-center gap-2">
-                ${p.name}
-                <img src="${getFlagUrl(p.country_code)}" title="Country Flag" alt="Country" class="w-5 h-3.5 rounded-sm inline shadow-sm border border-slate-700">
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-xs text-white flex items-center gap-1.5 truncate">
+                <span class="truncate">${p.name}</span>
+                <img src="${getFlagUrl(p.country_code)}" title="Country Flag" alt="Country" class="w-4 h-3 sm:w-5 sm:h-3.5 rounded-sm flex-shrink-0 inline shadow-sm border border-slate-700">
               </div>
-              <div class="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
-                <img src="${p.club_logo}" class="w-4 h-4 inline object-contain" alt="Club Logo">
-                ${p.team}
+              <div class="text-[11px] sm:text-xs text-slate-400 flex items-center gap-1.5 mt-0.5 truncate">
+                <img src="${p.club_logo}" class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 inline object-contain" alt="Club Logo">
+                <span class="truncate">${p.team}</span>
               </div>
             </div>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center justify-between xs:justify-end gap-2.5 w-full xs:w-auto pt-1 xs:pt-0 border-t xs:border-t-0 border-slate-700/40">
             <span class="text-xs font-black text-emerald-400">${p.similarity_score}%</span>
-            <button onclick="compareWithTwin(${p.id})" title="Compare with ${p.name}" aria-label="Compare ${p.name}" class="h-9 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded-xl border border-emerald-500/20 transition flex items-center gap-1">
+            <button onclick="compareWithTwin(${p.id})" title="Compare with ${p.name}" aria-label="Compare ${p.name}" class="h-8 sm:h-9 px-2.5 sm:px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-xs rounded-xl border border-emerald-500/20 transition flex items-center gap-1">
               <span>⇄</span>
-              <span class="hidden sm:inline text-xs">Compare</span>
+              <span class="text-xs">Compare</span>
             </button>
           </div>
         </div>
@@ -806,7 +852,6 @@
         if (twinImg) loadPlayerPortrait(p.name, twinImg);
       });
     }
-
 
     async function compareWithTwin(twinId) {
       const res = await fetch(`/api/scout/player/${twinId}`);
@@ -846,6 +891,8 @@
           ]
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: true,
           scales: { r: { min: 0, max: 100, ticks: { display: false } } },
           plugins: { legend: { labels: { color: '#fff' } } }
         }
@@ -857,9 +904,9 @@
         const valB = activePlayerB.stats[m].raw_value;
         const title = METRIC_TITLE_MAP[m] || m.replace('_p90','').replace('_',' ');
         return `
-          <div class="grid grid-cols-7 items-center p-2 rounded-lg bg-slate-800/40">
+          <div class="grid grid-cols-7 items-center p-2 rounded-lg bg-slate-800/40 text-[11px] sm:text-xs">
             <div class="col-span-2 font-bold ${valA >= valB ? 'text-emerald-400' : 'text-slate-400'}">${valA}</div>
-            <div class="col-span-3 text-center text-xs text-slate-300 font-semibold">${title}</div>
+            <div class="col-span-3 text-center text-slate-300 font-semibold truncate px-1" title="${title}">${title}</div>
             <div class="col-span-2 text-right font-bold ${valB > valA ? 'text-cyan-400' : 'text-slate-400'}">${valB}</div>
           </div>
         `;
@@ -889,26 +936,26 @@
 
       const container = document.getElementById('replacementCardsList');
       container.innerHTML = candidates.map((p, idx) => `
-        <div class="glass-card p-3 rounded-xl flex items-center justify-between hover:border-emerald-500/40 transition">
-          <div class="flex items-center gap-3">
-            <span class="text-sm font-bold text-slate-500">#${idx + 1}</span>
+        <div class="glass-card p-3 rounded-xl flex flex-col xs:flex-row xs:items-center justify-between gap-2.5 hover:border-emerald-500/40 transition">
+          <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <span class="text-xs sm:text-sm font-bold text-slate-500 flex-shrink-0">#${idx + 1}</span>
             <img 
               id="rep-face-${p.id}"
               referrerpolicy="no-referrer"
               src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
               alt="${p.name}" 
-              class="w-8 h-8 rounded-lg object-cover bg-slate-800 border border-slate-700/50" 
+              class="w-8 h-8 rounded-lg object-cover bg-slate-800 border border-slate-700/50 flex-shrink-0" 
               onerror="handleFaceFallback(this)"
             />
-            <div>
-              <div class="font-bold text-xs text-white flex items-center gap-1.5">
-                ${p.name}
-                <img src="${getFlagUrl(p.country_code)}" class="w-5 h-3.5 rounded-sm inline border border-slate-700" alt="Country">
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-xs text-white flex items-center gap-1.5 truncate">
+                <span class="truncate">${p.name}</span>
+                <img src="${getFlagUrl(p.country_code)}" class="w-4 h-3 sm:w-5 sm:h-3.5 rounded-sm flex-shrink-0 inline border border-slate-700" alt="Country">
               </div>
-              <div class="text-xs text-slate-400">${p.team} • ${p.age}y • €${p.estimated_value}M Est.</div>
+              <div class="text-[11px] sm:text-xs text-slate-400 truncate">${p.team} • ${p.age}y • €${p.estimated_value}M</div>
             </div>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center justify-between xs:justify-end gap-3 pt-1 xs:pt-0 border-t xs:border-t-0 border-slate-800">
             <span class="text-xs font-black text-emerald-400">${p.similarity_score}%</span>
             <button onclick="loadSinglePlayer(${p.id}); setMode('single');" class="text-xs bg-emerald-500 hover:bg-emerald-400 text-black font-bold px-3 py-1.5 rounded-xl transition">Scout</button>
           </div>
@@ -999,47 +1046,47 @@
       const rows = FORMATION_LAYOUTS[form] || FORMATION_LAYOUTS["4-3-3"];
 
       container.innerHTML = rows.map(row => `
-        <div class="flex items-center justify-around gap-2">
+        <div class="flex items-center justify-around gap-1 sm:gap-2">
           ${row.slots.map(slot => {
             const p = currentSquad.starting_xi ? currentSquad.starting_xi[slot] : null;
             const cleanPos = cleanSlotLabel(slot);
 
             if (p) {
               return `
-                <div class="glass-card p-2 rounded-2xl flex flex-col items-center justify-between text-center w-24 sm:w-28 border border-emerald-500/40 hover:border-emerald-400 transition shadow-lg relative group bg-slate-900/80">
-                  <button onclick="removeStartingPlayer('${slot}')" class="absolute -top-1.5 -right-1.5 bg-rose-500 hover:bg-rose-400 text-white rounded-full w-4 h-4 text-[9px] font-black leading-none hidden group-hover:flex items-center justify-center shadow">✕</button>
+                <div class="glass-card p-1.5 sm:p-2 rounded-xl sm:rounded-2xl flex flex-col items-center justify-between text-center w-[18%] min-w-[56px] max-w-[96px] sm:w-28 border border-emerald-500/40 hover:border-emerald-400 transition shadow-lg relative group bg-slate-900/80">
+                  <button onclick="removeStartingPlayer('${slot}')" class="absolute -top-1 -right-1 bg-rose-500 hover:bg-rose-400 text-white rounded-full w-4 h-4 text-[9px] font-black leading-none flex sm:hidden sm:group-hover:flex items-center justify-center shadow z-20">✕</button>
                   
-                  <div class="relative mb-1 cursor-pointer" onclick="openPlayerPicker('${slot}')">
+                  <div class="relative mb-0.5 sm:mb-1 cursor-pointer" onclick="openPlayerPicker('${slot}')">
                     <img 
                       id="pitch-face-${slot}-${p.id}"
                       referrerpolicy="no-referrer"
                       src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
                       alt="${p.name}" 
-                      class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover bg-slate-800 border border-emerald-500/40"
+                      class="w-7 h-7 xs:w-8 xs:h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl object-cover bg-slate-800 border border-emerald-500/40"
                       onerror="handleFaceFallback(this)"
                     />
-                    <span class="absolute -bottom-1 -right-1 bg-emerald-500 text-black text-[9px] font-black px-1 rounded uppercase">${cleanPos}</span>
+                    <span class="absolute -bottom-1 -right-1 bg-emerald-500 text-black text-[7px] xs:text-[8px] sm:text-[9px] font-black px-0.5 sm:px-1 rounded uppercase">${cleanPos}</span>
                   </div>
 
                   <div class="w-full cursor-pointer" onclick="openPlayerPicker('${slot}')">
-                    <div class="font-extrabold text-xs text-white truncate max-w-full leading-tight">${p.name}</div>
-                    <div class="text-[10px] text-slate-400 truncate flex items-center justify-center gap-1 mt-0.5">
-                      <img src="${p.club_logo}" class="w-3 h-3 object-contain" alt="Club Logo">
-                      <span>${p.team}</span>
+                    <div class="font-extrabold text-[9px] xs:text-[10px] sm:text-xs text-white truncate max-w-full leading-tight">${p.name}</div>
+                    <div class="text-[8px] sm:text-[10px] text-slate-400 truncate hidden xs:flex items-center justify-center gap-0.5 sm:gap-1 mt-0.5">
+                      <img src="${p.club_logo}" class="w-2.5 h-2.5 sm:w-3 sm:h-3 object-contain" alt="Club Logo">
+                      <span class="truncate">${p.team}</span>
                     </div>
                   </div>
 
-                  <button onclick="openPlayerPicker('${slot}')" class="mt-1 text-xs text-emerald-400 hover:text-white font-bold bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20 w-full transition">
+                  <button onclick="openPlayerPicker('${slot}')" class="mt-1 text-[8px] xs:text-[9px] sm:text-xs text-emerald-400 hover:text-white font-bold bg-emerald-500/10 hover:bg-emerald-500/20 px-1 py-0.5 sm:px-2 sm:py-0.5 rounded sm:rounded-lg border border-emerald-500/20 w-full transition truncate">
                     Swap
                   </button>
                 </div>
               `;
             } else {
               return `
-                <div onclick="openPlayerPicker('${slot}')" class="glass-card p-2 rounded-2xl flex flex-col items-center justify-center text-center w-24 sm:w-28 h-24 border border-dashed border-slate-700 hover:border-emerald-500/60 cursor-pointer transition bg-slate-900/40 group">
-                  <div class="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase mb-1">${cleanPos}</div>
-                  <div class="text-lg text-slate-500 group-hover:text-emerald-400 transition">+</div>
-                  <div class="text-xs text-slate-400 font-bold">Select Player</div>
+                <div onclick="openPlayerPicker('${slot}')" class="glass-card p-1 sm:p-2 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center text-center w-[18%] min-w-[56px] max-w-[96px] sm:w-28 h-20 sm:h-24 border border-dashed border-slate-700 hover:border-emerald-500/60 cursor-pointer transition bg-slate-900/40 group">
+                  <div class="text-[8px] sm:text-xs font-black text-emerald-400 bg-emerald-500/10 px-1 sm:px-2 py-0.5 rounded border border-emerald-500/20 uppercase mb-0.5 sm:mb-1">${cleanPos}</div>
+                  <div class="text-sm sm:text-lg text-slate-500 group-hover:text-emerald-400 transition">+</div>
+                  <div class="text-[8px] sm:text-xs text-slate-400 font-bold hidden xs:block">Select</div>
                 </div>
               `;
             }
@@ -1047,7 +1094,6 @@
         </div>
       `).join('');
 
-      // Load faces for starting XI
       if (currentSquad.starting_xi) {
         Object.entries(currentSquad.starting_xi).forEach(([slot, p]) => {
           if (p) {
@@ -1066,30 +1112,30 @@
       const bench = currentSquad.bench || [];
 
       let html = bench.map((p, idx) => `
-        <div class="glass-card p-2.5 rounded-xl flex items-center justify-between border border-slate-700/60 bg-slate-900/60 hover:border-slate-600 transition">
-          <div class="flex items-center gap-2">
+        <div class="glass-card p-2 sm:p-2.5 rounded-xl flex items-center justify-between border border-slate-700/60 bg-slate-900/60 hover:border-slate-600 transition min-w-0">
+          <div class="flex items-center gap-2 min-w-0 flex-1">
             <img 
               id="bench-face-${p.id}"
               referrerpolicy="no-referrer"
               src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
               alt="${p.name}" 
-              class="w-7 h-7 rounded-lg object-cover bg-slate-800 border border-slate-700"
+              class="w-7 h-7 rounded-lg object-cover bg-slate-800 border border-slate-700 flex-shrink-0"
               onerror="handleFaceFallback(this)"
             />
-            <div>
-              <div class="font-bold text-xs text-white flex items-center gap-1 leading-tight">
-                ${p.name}
-                <span class="text-[9px] bg-slate-800 text-emerald-400 font-extrabold px-1 rounded">${p.position}</span>
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-xs text-white flex items-center gap-1 leading-tight truncate">
+                <span class="truncate">${p.name}</span>
+                <span class="text-[9px] bg-slate-800 text-emerald-400 font-extrabold px-1 rounded flex-shrink-0">${p.position}</span>
               </div>
-              <div class="text-[10px] text-slate-400">${p.team} • €${p.estimated_value}M</div>
+              <div class="text-[10px] text-slate-400 truncate">${p.team} • €${p.estimated_value}M</div>
             </div>
           </div>
-          <button onclick="removeBenchPlayer(${idx})" class="text-rose-400 hover:text-rose-300 text-xs font-bold px-1.5 py-0.5">✕</button>
+          <button onclick="removeBenchPlayer(${idx})" class="text-rose-400 hover:text-rose-300 text-xs font-bold px-1.5 py-0.5 flex-shrink-0 ml-1">✕</button>
         </div>
       `).join('');
 
       html += `
-        <div onclick="openPlayerPicker('bench')" class="glass-card p-2.5 rounded-xl flex items-center justify-center border border-dashed border-slate-700 hover:border-emerald-500/60 cursor-pointer transition text-slate-400 hover:text-emerald-400 text-xs font-bold gap-1.5">
+        <div onclick="openPlayerPicker('bench')" class="glass-card p-2 sm:p-2.5 rounded-xl flex items-center justify-center border border-dashed border-slate-700 hover:border-emerald-500/60 cursor-pointer transition text-slate-400 hover:text-emerald-400 text-xs font-bold gap-1.5 min-h-[44px]">
           <span>＋</span> Add Bench Player
         </div>
       `;
@@ -1164,28 +1210,28 @@
       }
 
       container.innerHTML = candidates.map(p => `
-        <div class="glass-card p-3 rounded-xl flex items-center justify-between border border-slate-800 hover:border-emerald-500/40 transition">
-          <div class="flex items-center gap-3">
+        <div class="glass-card p-2.5 sm:p-3 rounded-xl flex flex-col xs:flex-row xs:items-center justify-between gap-2.5 border border-slate-800 hover:border-emerald-500/40 transition">
+          <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <img 
               id="cand-face-${p.id}"
               referrerpolicy="no-referrer"
               src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
               alt="${p.name}" 
-              class="w-9 h-9 rounded-lg object-cover bg-slate-800 border border-slate-700"
+              class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-cover bg-slate-800 border border-slate-700 flex-shrink-0" 
               onerror="handleFaceFallback(this)"
             />
-            <div>
-              <div class="font-extrabold text-xs text-white flex items-center gap-1.5">
-                ${p.name}
-                <img src="${getFlagUrl(p.country_code)}" class="w-5 h-3.5 rounded-sm inline border border-slate-700" alt="Country">
+            <div class="min-w-0 flex-1">
+              <div class="font-extrabold text-xs text-white flex items-center gap-1.5 truncate">
+                <span class="truncate">${p.name}</span>
+                <img src="${getFlagUrl(p.country_code)}" class="w-4 h-3 sm:w-5 sm:h-3.5 rounded-sm flex-shrink-0 inline border border-slate-700" alt="Country">
               </div>
-              <div class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                <img src="${p.club_logo}" class="w-4 h-4 object-contain inline" alt="Club Logo">
-                <span>${p.team} • ${p.age}y • €${p.estimated_value}M</span>
+              <div class="text-[11px] sm:text-xs text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                <img src="${p.club_logo}" class="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain inline flex-shrink-0" alt="Club Logo">
+                <span class="truncate">${p.team} • ${p.age}y • €${p.estimated_value}M</span>
               </div>
             </div>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center justify-between xs:justify-end gap-2 pt-1 xs:pt-0 border-t xs:border-t-0 border-slate-800">
             <span class="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">${p.suitability_score || 85}% Match</span>
             <button onclick="addCandidateToSquad(${p.id})" class="text-xs bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold px-3 py-1.5 rounded-xl transition shadow">
               ＋ Add
@@ -1282,14 +1328,14 @@
 
       container.innerHTML = players.slice(0, 15).map(p => `
         <div onclick="selectPickerPlayer(${p.id})" class="p-2 rounded-xl bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 transition cursor-pointer flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <img src="${p.club_logo}" class="w-4 h-4 object-contain">
-            <div>
-              <div class="font-extrabold text-xs text-white">${p.name}</div>
-              <div class="text-xs text-slate-400">${p.team} • ${p.position} • ${p.age}y</div>
+          <div class="flex items-center gap-2.5 min-w-0">
+            <img src="${p.club_logo}" class="w-4 h-4 object-contain flex-shrink-0">
+            <div class="min-w-0 flex-1">
+              <div class="font-extrabold text-xs text-white truncate">${p.name}</div>
+              <div class="text-xs text-slate-400 truncate">${p.team} • ${p.position} • ${p.age}y</div>
             </div>
           </div>
-          <span class="text-xs text-emerald-400 font-extrabold bg-emerald-500/10 px-2 py-0.5 rounded">€${p.estimated_value}M</span>
+          <span class="text-xs text-emerald-400 font-extrabold bg-emerald-500/10 px-2 py-0.5 rounded flex-shrink-0 ml-2">€${p.estimated_value}M</span>
         </div>
       `).join('');
     }
