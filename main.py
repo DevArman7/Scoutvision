@@ -78,3 +78,38 @@ def find_player_replacements(
     if replacements is None:
         raise HTTPException(status_code=404, detail="Player not found")
     return replacements
+
+from pydantic import BaseModel
+from typing import List
+
+class SquadPlayerInput(BaseModel):
+    id: int
+    slot: Optional[str] = None
+
+class SquadAnalyzeRequest(BaseModel):
+    starting_xi: List[SquadPlayerInput]
+    bench: Optional[List[SquadPlayerInput]] = []
+
+@app.get("/api/scout/squad/preset")
+def get_preset_squad():
+    """Serves the default preset 4-3-3 squad structure."""
+    return scout_engine.get_preset_squad()
+
+@app.post("/api/scout/squad/analyze")
+def analyze_squad(payload: SquadAnalyzeRequest):
+    """Calculates squad rating metrics, weakness detection, and recommendations."""
+    starters = []
+    for sp in payload.starting_xi:
+        prof = scout_engine.get_player_profile(sp.id)
+        if prof:
+            if sp.slot: prof["slot"] = sp.slot
+            starters.append(prof)
+
+    bench = []
+    if payload.bench:
+        for bp in payload.bench:
+            prof = scout_engine.get_player_profile(bp.id)
+            if prof:
+                bench.append(prof)
+
+    return scout_engine.analyze_squad(starting_players=starters, bench_players=bench)

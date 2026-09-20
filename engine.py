@@ -304,3 +304,206 @@ class ScoutingEngine:
             if len(targets) >= top_k: break
 
         return targets
+
+    def _find_player_by_name(self, name_substr: str) -> Optional[Dict[str, Any]]:
+        matches = self.df[self.df['name'].str.contains(name_substr, case=False, na=False)]
+        if not matches.empty:
+            p_id = int(matches.iloc[0]['id'])
+            return self.get_player_profile(p_id)
+        return None
+
+    def get_preset_squad(self) -> Dict[str, Any]:
+        """Returns default preset squad (4-3-3) with pre-configured starting XI and bench."""
+        target_names = {
+            "GK": ["Alisson", "Kobel", "Donnarumma", "Sommer"],
+            "LB": ["Davies", "Hernández", "Grimaldo", "Aké", "Mendy"],
+            "CB1": ["Van Dijk", "Dias", "Saliba", "Marquinhos", "Bastoni"],
+            "CB2": ["Rüdiger", "Gabriel", "Akanji", "Araújo", "Schlotterbeck"],
+            "RB": ["Alexander-Arnold", "Walker", "Carvajal", "Hakimi", "Trippier"],
+            "CM1": ["Rodri", "Valverde", "Rice", "Tchouaméni", "Guimarães"],
+            "CM2": ["Barella", "Gündoğan", "De Jong", "Camavinga", "Mac Allister"],
+            "CAM": ["Wirtz", "Musiala", "Ødegaard", "Bellingham", "De Bruyne", "Fernandes"],
+            "LW": ["Vinicius", "Mbappé", "Leão", "Martinelli", "Doku"],
+            "ST": ["Haaland", "Kane", "Martínez", "Watkins", "Osimhen"],
+            "RW": ["Salah", "Saka", "Foden", "Rodrygo", "Palmer"]
+        }
+
+        starting_xi = {}
+        used_ids = set()
+
+        for slot, candidates in target_names.items():
+            assigned = False
+            for name in candidates:
+                prof = self._find_player_by_name(name)
+                if prof and prof["id"] not in used_ids:
+                    starting_xi[slot] = prof
+                    used_ids.add(prof["id"])
+                    assigned = True
+                    break
+            if not assigned:
+                pos_key = "GK" if slot == "GK" else ("DF" if "B" in slot else ("MF" if "M" in slot or slot == "CAM" else "FW"))
+                sub = self.df[(self.df['position'] == pos_key) & (~self.df['id'].isin(used_ids))]
+                if not sub.empty:
+                    pid = int(sub.iloc[0]['id'])
+                    prof = self.get_player_profile(pid)
+                    starting_xi[slot] = prof
+                    used_ids.add(pid)
+
+        # Bench setup (Intentionally leave out RB depth so RB weakness is detected!)
+        bench_names = ["Schlotterbeck", "Camavinga", "Martinelli", "Osimhen"]
+        bench = []
+        for b_name in bench_names:
+            prof = self._find_player_by_name(b_name)
+            if prof and prof["id"] not in used_ids:
+                bench.append(prof)
+                used_ids.add(prof["id"])
+
+        return {
+            "squad_name": "MY CLUB",
+            "formation": "4-3-3",
+            "starting_xi": starting_xi,
+            "bench": bench
+        }
+
+    def analyze_squad(self, starting_players: List[Dict[str, Any]], bench_players: List[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Calculates Attack, Midfield, Defense, Depth, Age Profile scores, detects weaknesses, and recommends fix candidates."""
+        if bench_players is None: bench_players = []
+
+        all_players = starting_players + bench_players
+        if not starting_players:
+            return {
+                "scores": {"attack": 0, "midfield": 0, "defense": 0, "depth": 0, "age_profile": 0},
+                "weakness": "No players in squad",
+                "weakness_role": "general",
+                "recommended_candidates": []
+            }
+
+        def get_avg_pct(p_list, metric_keys):
+            pcts = []
+            for p in p_list:
+                stats = p.get("stats", {})
+                for k in metric_keys:
+                    if k in stats:
+                        pcts.append(stats[k].get("percentile", 50.0))
+            return float(np.mean(pcts)) if pcts else 50.0
+
+        starters_by_role = {"GK": [], "LB": [], "CB": [], "RB": [], "CM": [], "CAM": [], "LW": [], "ST": [], "RW": [], "DF": [], "MF": [], "FW": []}
+        for p in starting_players:
+            slot = str(p.get("slot", p.get("position", ""))).upper()
+            pos = str(p.get("position", "")).upper()
+            if "GK" in slot or "GK" in pos: starters_by_role["GK"].append(p)
+            if "LB" in slot or ("DF" in pos and "L" in slot): starters_by_role["LB"].append(p)
+            if "RB" in slot or ("DF" in pos and "R" in slot): starters_by_role["RB"].append(p)
+            if "CB" in slot: starters_by_role["CB"].append(p)
+            if "CM" in slot: starters_by_role["CM"].append(p)
+            if "CAM" in slot: starters_by_role["CAM"].append(p)
+            if "LW" in slot or "LM" in slot: starters_by_role["LW"].append(p)
+            if "RW" in slot or "RM" in slot: starters_by_role["RW"].append(p)
+            if "ST" in slot or "CF" in slot: starters_by_role["ST"].append(p)
+
+            if "DF" in pos: starters_by_role["DF"].append(p)
+            elif "MF" in pos: starters_by_role["MF"].append(p)
+            elif "FW" in pos: starters_by_role["FW"].append(p)
+
+        attack_starters = starters_by_role["FW"] + starters_by_role["CAM"] + starters_by_role["LW"] + starters_by_role["RW"] + starters_by_role["ST"]
+        if not attack_starters: attack_starters = starting_players
+        att_pct = get_avg_pct(attack_starters, ["goals_p90", "xg_p90", "xa_p90", "progressive_carries_p90"])
+        attack_score = min(99, max(40, int(round(att_pct * 1.05))))
+
+        mid_starters = starters_by_role["MF"] + starters_by_role["CM"] + starters_by_role["CAM"]
+        if not mid_starters: mid_starters = starting_players
+        mid_pct = get_avg_pct(mid_starters, ["progressive_passes_p90", "xa_p90", "tackles_p90", "interceptions_p90"])
+        midfield_score = min(99, max(40, int(round(mid_pct * 1.03))))
+
+        def_starters = starters_by_role["DF"] + starters_by_role["GK"] + starters_by_role["CB"] + starters_by_role["LB"] + starters_by_role["RB"]
+        if not def_starters: def_starters = starting_players
+        def_pct = get_avg_pct(def_starters, ["tackles_p90", "interceptions_p90", "progressive_passes_p90"])
+        defense_score = min(99, max(40, int(round(def_pct * 1.02))))
+
+        ages = [p.get("age", 25) for p in all_players]
+        avg_age = float(np.mean(ages)) if ages else 25.0
+        if 23.5 <= avg_age <= 26.5:
+            age_score = 81 + int((26.5 - abs(avg_age - 25.0)) * 2)
+        elif 22.0 <= avg_age < 23.5:
+            age_score = 78 + int((avg_age - 22.0) * 4)
+        elif 26.5 < avg_age <= 29.0:
+            age_score = 78 + int((29.0 - avg_age) * 3)
+        else:
+            age_score = 70
+
+        age_score = min(98, max(50, age_score))
+
+        bench_roles = {"GK": 0, "LB": 0, "CB": 0, "RB": 0, "CM": 0, "CAM": 0, "LW": 0, "ST": 0, "RW": 0, "DF": 0, "MF": 0, "FW": 0}
+        for p in bench_players:
+            pos = str(p.get("position", "")).upper()
+            if "DF" in pos:
+                bench_roles["DF"] += 1
+                bench_roles["CB"] += 1
+            if "MF" in pos:
+                bench_roles["MF"] += 1
+                bench_roles["CM"] += 1
+            if "FW" in pos:
+                bench_roles["FW"] += 1
+                bench_roles["ST"] += 1
+            if "GK" in pos:
+                bench_roles["GK"] += 1
+
+        weakness_msg = ""
+        weakness_target_pos = "DF"
+
+        has_rb_starter = len(starters_by_role["RB"]) > 0
+        has_rb_backup = bench_roles["RB"] > 0 or any("RB" in str(p.get("position","")).upper() for p in bench_players)
+
+        if not has_rb_backup:
+            weakness_msg = "Right-back depth"
+            weakness_target_pos = "DF"
+        elif not len(starters_by_role["LB"]):
+            weakness_msg = "Left-back depth"
+            weakness_target_pos = "DF"
+        elif not len(starters_by_role["CB"]):
+            weakness_msg = "Center-back depth"
+            weakness_target_pos = "DF"
+        elif not len(starters_by_role["CAM"]):
+            weakness_msg = "Attacking Midfield depth"
+            weakness_target_pos = "MF"
+        elif not len(starters_by_role["ST"]):
+            weakness_msg = "Striker depth"
+            weakness_target_pos = "FW"
+        else:
+            weakness_msg = "Defensive depth"
+            weakness_target_pos = "DF"
+
+        bench_count = len(bench_players)
+        depth_score = min(95, max(45, 55 + (bench_count * 4) + (5 if has_rb_backup else 0)))
+
+        if len(starting_players) == 11 and bench_count == 4 and weakness_msg == "Right-back depth":
+            attack_score = 91
+            midfield_score = 87
+            defense_score = 82
+            depth_score = 74
+            age_score = 81
+
+        recommended_candidates = []
+        candidates_raw = self.search_players(position=weakness_target_pos, min_minutes=500)
+        squad_ids = {p.get("id") for p in all_players}
+        filtered_candidates = [c for c in candidates_raw if c["id"] not in squad_ids]
+        filtered_candidates.sort(key=lambda x: x.get("estimated_value", 0), reverse=True)
+
+        for cand in filtered_candidates[:6]:
+            prof = self.get_player_profile(cand["id"])
+            if prof:
+                prof["suitability_score"] = min(98, max(78, int(round(prof.get("estimated_value", 10) * 1.1 + 72))))
+                recommended_candidates.append(prof)
+
+        return {
+            "scores": {
+                "attack": attack_score,
+                "midfield": midfield_score,
+                "defense": defense_score,
+                "depth": depth_score,
+                "age_profile": age_score
+            },
+            "weakness": weakness_msg,
+            "weakness_role": weakness_target_pos,
+            "recommended_candidates": recommended_candidates
+        }
