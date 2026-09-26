@@ -1175,97 +1175,119 @@
       return { name, sources };
     }
 
+    async function fetchWikipediaPlayerImage(name) {
+      if (resolvedImageCache[name]) return resolvedImageCache[name];
+
+      // 1. Wikipedia Generator Search: ${name} footballer
+      try {
+        const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' footballer')}&gsrlimit=1&prop=pageimages&pithumbsize=400&format=json&origin=*`;
+        const res = await fetch(searchUrl);
+        const data = await res.json();
+        const pages = data.query?.pages;
+        if (pages) {
+          for (const pageId in pages) {
+            const thumb = pages[pageId]?.thumbnail?.source;
+            if (thumb) {
+              resolvedImageCache[name] = thumb;
+              return thumb;
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 2. Direct title fallbacks
+      const titlesToTry = [
+        name.trim().replace(/\s+/g, '_') + '_(footballer)',
+        name.trim().replace(/\s+/g, '_')
+      ];
+
+      for (const cleanTitle of titlesToTry) {
+        try {
+          const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanTitle)}&prop=pageimages&format=json&pithumbsize=400&origin=*`;
+          const res = await fetch(wikiUrl);
+          const data = await res.json();
+          const pages = data.query?.pages;
+          if (pages) {
+            for (const pageId in pages) {
+              const thumb = pages[pageId]?.thumbnail?.source;
+              if (thumb) {
+                resolvedImageCache[name] = thumb;
+                return thumb;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
+      return null;
+    }
+
     async function loadPlayerPortrait(playerObj, imgElement) {
       if (!imgElement) return;
       const name = typeof playerObj === 'string' ? playerObj : (playerObj?.name || "Player");
+      // Debug log of backend image fields
+      console.log("IMAGE DATA", {
+        name: name,
+        sofascore_id: playerObj?.sofascore_id,
+        fotmob_id: playerObj?.fotmob_id,
+        image_url: playerObj?.image_url
+      });
       imgElement.alt = name;
       imgElement.style.objectFit = 'cover';
       imgElement.style.objectPosition = 'center 20%';
 
-      // Check resolved cache
+      // 1. If already cached in resolvedImageCache[name]
       if (resolvedImageCache[name]) {
         imgElement.src = resolvedImageCache[name];
+        imgElement.onerror = function() {
+          this.onerror = null;
+          this.src = createSvgPlaceholderDataUrl(name);
+        };
         return;
       }
 
-      const { sources } = getPlayerWaterfallSources(playerObj);
+      // Use only the verified direct image URL from backend (if present)
+      const verifiedUrl = typeof playerObj === 'object' ? playerObj?.image_url : null;
 
-      // Store waterfall state on element
-      imgElement.dataset.waterfallSources = JSON.stringify(sources);
-      imgElement.dataset.waterfallIndex = "0";
-      imgElement.dataset.playerName = name;
-
-      imgElement.onerror = function() {
-        handleImageWaterfall(this);
-      };
-
-      imgElement.src = sources[0];
-
-      // Parallel Wikipedia lookup if missing primary IDs
-      if (typeof playerObj === 'string' || (!playerObj?.sofascore_id && !playerObj?.fotmob_id)) {
-        try {
-          const cleanName = name.trim().replace(/\s+/g, '_');
-          const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanName)}&prop=pageimages&format=json&pithumbsize=300&origin=*`;
-          const res = await fetch(wikiUrl);
-          const data = await res.json();
-          const pages = data.query?.pages;
-          if (pages) {
-            const pageId = Object.keys(pages)[0];
-            const thumb = pages[pageId]?.thumbnail?.source;
-            if (thumb) {
-              resolvedImageCache[name] = thumb;
-              imgElement.src = thumb;
-            }
+      // If a verified provider URL exists, try it first
+      if (verifiedUrl) {
+        imgElement.onerror = async function() {
+          // Provider URL failed – fall back to Wikipedia
+          const wikiThumb = await fetchWikipediaPlayerImage(name);
+          if (wikiThumb) {
+            imgElement.src = wikiThumb;
+            imgElement.onerror = function() {
+              this.onerror = null;
+              this.src = createSvgPlaceholderDataUrl(name);
+            };
+          } else {
+            imgElement.src = createSvgPlaceholderDataUrl(name);
           }
-        } catch (e) {
-          // Ignore wiki error, let waterfall proceed
-        }
+        };
+        imgElement.src = verifiedUrl;
+        return;
       }
-    }
 
-    async function handleImageWaterfall(imgEl) {
-      if (!imgEl) return;
-      const name = imgEl.dataset.playerName || imgEl.alt || "Player";
-      let sources = [];
-      try {
-        sources = JSON.parse(imgEl.dataset.waterfallSources || "[]");
-      } catch (e) {}
-
-      let idx = parseInt(imgEl.dataset.waterfallIndex || "0", 10) + 1;
-
-      if (sources.length > 0 && idx < sources.length) {
-        imgEl.dataset.waterfallIndex = idx.toString();
-        imgEl.src = sources[idx];
-        if (idx === sources.length - 1) {
-          imgEl.onerror = null;
-        }
+      // No verified provider URL – go straight to Wikipedia
+      const wikiThumb = await fetchWikipediaPlayerImage(name);
+      if (wikiThumb) {
+        imgElement.src = wikiThumb;
+        imgElement.onerror = function() {
+          this.onerror = null;
+          this.src = createSvgPlaceholderDataUrl(name);
+        };
       } else {
-        // Attempt Wikipedia lookup before final SVG placeholder if not already cached
-        try {
-          const cleanName = name.trim().replace(/\s+/g, '_');
-          const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanName)}&prop=pageimages&format=json&pithumbsize=300&origin=*`;
-          const res = await fetch(wikiUrl);
-          const data = await res.json();
-          const pages = data.query?.pages;
-          if (pages) {
-            const pageId = Object.keys(pages)[0];
-            const thumb = pages[pageId]?.thumbnail?.source;
-            if (thumb) {
-              resolvedImageCache[name] = thumb;
-              imgEl.onerror = null;
-              imgEl.src = thumb;
-              return;
-            }
-          }
-        } catch (e) {}
-
-        imgEl.onerror = null;
-        imgEl.src = createSvgPlaceholderDataUrl(name);
+        const placeholder = createSvgPlaceholderDataUrl(name);
+        resolvedImageCache[name] = placeholder;
+        imgElement.src = placeholder;
       }
     }
 
     function handleFaceFallback(img) {
-      handleImageWaterfall(img);
+      if (!img) return;
+      const name = img.alt || "Player";
+      img.onerror = null;
+      img.src = createSvgPlaceholderDataUrl(name);
     }
 
     function getFlagUrl(code) {
@@ -1576,7 +1598,7 @@
 
       similars.forEach(p => {
         const twinImg = document.getElementById(`twin-face-${p.id}`);
-        if (twinImg) loadPlayerPortrait(p.name, twinImg);
+        if (twinImg) loadPlayerPortrait(p, twinImg);
       });
     }
 
@@ -1596,11 +1618,11 @@
 
       document.getElementById('compNameA').innerText = activePlayerA.name;
       document.getElementById('compTeamA').innerText = activePlayerA.team;
-      loadPlayerPortrait(activePlayerA.name, document.getElementById('compFaceA'));
+      loadPlayerPortrait(activePlayerA, document.getElementById('compFaceA'));
 
       document.getElementById('compNameB').innerText = activePlayerB.name;
       document.getElementById('compTeamB').innerText = activePlayerB.team;
-      loadPlayerPortrait(activePlayerB.name, document.getElementById('compFaceB'));
+      loadPlayerPortrait(activePlayerB, document.getElementById('compFaceB'));
 
       const labels = Object.keys(activePlayerA.stats).map(k => METRIC_TITLE_MAP[k] || k.replace('_p90', '').replace('_', ' '));
       const p1Data = Object.values(activePlayerA.stats).map(s => s.percentile);
@@ -1691,7 +1713,7 @@
 
       candidates.forEach(p => {
         const repImg = document.getElementById(`rep-face-${p.id}`);
-        if (repImg) loadPlayerPortrait(p.name, repImg);
+        if (repImg) loadPlayerPortrait(p, repImg);
       });
     }
 
@@ -1825,7 +1847,7 @@
         Object.entries(currentSquad.starting_xi).forEach(([slot, p]) => {
           if (p) {
             const img = document.getElementById(`pitch-face-${slot}-${p.id}`);
-            if (img) loadPlayerPortrait(p.name, img);
+            if (img) loadPlayerPortrait(p, img);
           }
         });
       }
@@ -1871,7 +1893,7 @@
 
       bench.forEach(p => {
         const img = document.getElementById(`bench-face-${p.id}`);
-        if (img) loadPlayerPortrait(p.name, img);
+        if (img) loadPlayerPortrait(p, img);
       });
     }
 
@@ -1969,7 +1991,7 @@
 
       candidates.forEach(p => {
         const img = document.getElementById(`cand-face-${p.id}`);
-        if (img) loadPlayerPortrait(p.name, img);
+        if (img) loadPlayerPortrait(p, img);
       });
     }
 
@@ -2304,7 +2326,7 @@
 
       best.players.forEach(p => {
         const img = document.getElementById(`opt-best-face-${p.id}`);
-        if (img) loadPlayerPortrait(p.name, img);
+        if (img) loadPlayerPortrait(p, img);
       });
 
       const otherContainer = document.getElementById('optOtherStrategiesList');
@@ -2423,7 +2445,7 @@
       document.getElementById('devGrowthDeltaVal').innerText = `${data.projection.growth >= 0 ? '+' : ''}${data.projection.growth}`;
 
       // Images
-      loadPlayerPortrait(data.name, document.getElementById('devPlayerFaceImg'));
+      loadPlayerPortrait(data, document.getElementById('devPlayerFaceImg'));
       document.getElementById('devClubCrestImg').src = data.club_logo;
       document.getElementById('devCountryFlagImg').src = getFlagUrl(data.country_code);
 
