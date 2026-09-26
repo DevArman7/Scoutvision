@@ -29,6 +29,11 @@ def serve_dashboard():
         raise HTTPException(status_code=404, detail="Frontend file 'static/index.html' not found.")
     return FileResponse(index_path)
 
+def _unwrap(val, default):
+    if hasattr(val, 'default'):
+        return default if val.default is ... else val.default
+    return val if val is not None else default
+
 @app.get("/api/scout/search")
 def search_players(
     position: Optional[str] = Query(None, description="Filter by position: FW, MF, DF"),
@@ -36,7 +41,10 @@ def search_players(
     q: Optional[str] = Query(None, description="Search player by name")
 ):
     """Search and filter players for scouting."""
-    return scout_engine.search_players(position=position, min_minutes=min_minutes, query=q)
+    pos = _unwrap(position, None)
+    mins = _unwrap(min_minutes, 0)
+    query_str = _unwrap(q, None)
+    return scout_engine.search_players(position=pos, min_minutes=mins, query=query_str)
 
 @app.get("/api/scout/player/{player_id}")
 def get_player(player_id: int):
@@ -52,7 +60,8 @@ def get_similar_players(
     top_k: int = Query(5, ge=1, le=10, description="Number of matches to return")
 ):
     """Find the top statistically similar players using cosine similarity."""
-    similar = scout_engine.get_similar_players(player_id, top_k=top_k)
+    k = _unwrap(top_k, 5)
+    similar = scout_engine.get_similar_players(player_id, top_k=k)
     if similar is None:
         raise HTTPException(status_code=404, detail="Player not found")
     return similar
@@ -69,11 +78,11 @@ def find_player_replacements(
     """Find realistic recruitment replacements based on age, budget cap, and similarity."""
     replacements = scout_engine.find_replacements(
         player_id=player_id,
-        min_age=min_age,
-        max_age=max_age,
-        max_budget=max_budget,
-        min_similarity=min_similarity,
-        top_k=top_k
+        min_age=_unwrap(min_age, 16),
+        max_age=_unwrap(max_age, 28),
+        max_budget=_unwrap(max_budget, 60.0),
+        min_similarity=_unwrap(min_similarity, 75.0),
+        top_k=_unwrap(top_k, 10)
     )
     if replacements is None:
         raise HTTPException(status_code=404, detail="Player not found")
@@ -137,4 +146,25 @@ def solve_transfer_optimizer(payload: OptimizerRequest):
         league=payload.league,
         preferred_foot=payload.preferred_foot
     )
+
+@app.get("/api/scout/player/{player_id}/development")
+def get_player_development_projection(player_id: int):
+    """Retrieve historical stats, ML development projection, confidence intervals, drivers, and metrics."""
+    proj = scout_engine.get_development_projection(player_id)
+    if not proj:
+        raise HTTPException(status_code=404, detail="Player not found")
+    return proj
+
+@app.get("/api/scout/player/{player_id_1}/compare-development/{player_id_2}")
+def compare_player_development_projections(player_id_1: int, player_id_2: int):
+    """Compare development projections side-by-side between two players."""
+    comp = scout_engine.compare_development_projections(player_id_1, player_id_2)
+    if not comp:
+        raise HTTPException(status_code=404, detail="One or both players not found")
+    return comp
+
+@app.get("/api/scout/development/model-info")
+def get_development_model_metadata():
+    """Retrieve ML model architecture, training configuration, and empirical metrics (MAE, RMSE, R2)."""
+    return scout_engine.get_development_model_info()
 

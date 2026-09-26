@@ -97,6 +97,9 @@ class ScoutingEngine:
         self.scaler = StandardScaler()
         self._preprocess()
         self._estimate_market_values()
+        
+        from development import DevelopmentProjectionEngine
+        self.dev_engine = DevelopmentProjectionEngine(self.df)
 
     def _preprocess(self):
         for metric in self.feature_columns:
@@ -723,4 +726,43 @@ class ScoutingEngine:
             "positions_requested": positions,
             "best_strategy": best_value,
             "strategies": strategies
-        }
+        }
+
+    def get_development_projection(self, player_id: int) -> Optional[Dict[str, Any]]:
+        """Retrieve full player development projection payload."""
+        player_row = self.df[self.df["id"] == player_id]
+        if player_row.empty:
+            return None
+
+        row = player_row.iloc[0]
+        proj = self.dev_engine.get_player_projection(row)
+
+        team_name = str(row.get("team", "Unknown"))
+        proj["club_logo"] = self._get_club_logo_url(team_name)
+        proj["country_code"] = str(row.get("country_code", "eu"))
+        proj["league"] = str(row.get("league", "Top 5 European"))
+        proj["estimated_value"] = float(row.get("estimated_value", 10.0))
+
+        return proj
+
+    def compare_development_projections(self, player_id_1: int, player_id_2: int) -> Optional[Dict[str, Any]]:
+        """Compare development projections side-by-side between two players."""
+        proj1 = self.get_development_projection(player_id_1)
+        proj2 = self.get_development_projection(player_id_2)
+
+        if not proj1 or not proj2:
+            return None
+
+        return {
+            "player1": proj1,
+            "player2": proj2,
+            "comparison": {
+                "score_delta": round(proj1["projection"]["projected_score"] - proj2["projection"]["projected_score"], 1),
+                "growth_delta": round(proj1["projection"]["growth"] - proj2["projection"]["growth"], 1),
+                "higher_potential_player": proj1["name"] if proj1["projection"]["projected_score"] >= proj2["projection"]["projected_score"] else proj2["name"]
+            }
+        }
+
+    def get_development_model_info(self) -> Dict[str, Any]:
+        """Retrieve ML model metadata and empirical performance metrics."""
+        return self.dev_engine.get_model_info()

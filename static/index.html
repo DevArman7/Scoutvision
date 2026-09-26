@@ -36,6 +36,7 @@
       <!-- Desktop Nav Modes -->
       <div class="hidden md:flex items-center bg-slate-900/90 border border-slate-800 p-1 rounded-xl gap-1">
         <button id="singleModeBtn" onclick="setMode('single')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition">Player Profile</button>
+        <button id="devModeBtn" onclick="setMode('development')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">📈 Development</button>
         <button id="compareModeBtn" onclick="setMode('compare')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">⚔️ Comparison</button>
         <button id="replaceModeBtn" onclick="setMode('replace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🔎 Find Replacement</button>
         <button id="squadModeBtn" onclick="setMode('squad')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🛡️ Squad Builder</button>
@@ -52,6 +53,9 @@
     <div id="mobileNavMenu" class="hidden md:hidden border-t border-slate-800 bg-[#0f141c] px-4 py-3 space-y-2 shadow-2xl">
       <button id="mobileSingleModeBtn" onclick="setMode('single'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2">
         <span>👤</span> Player Profile
+      </button>
+      <button id="mobileDevModeBtn" onclick="setMode('development'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2">
+        <span>📈</span> Development Projection
       </button>
       <button id="mobileCompareModeBtn" onclick="setMode('compare'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2">
         <span>⚔️</span> Comparison Mode
@@ -180,7 +184,10 @@
             </div>
             <div class="px-2 sm:px-3 py-1 border-t sm:border-t-0 sm:border-l border-slate-800 flex flex-col justify-center items-center">
               <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Actions</div>
-              <button onclick="initiateReplacementMode()" class="mt-1 text-xs font-extrabold bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-black px-3 py-1.5 rounded-xl shadow-lg shadow-emerald-500/25 transition min-h-[32px]">Replace</button>
+              <div class="flex items-center gap-1.5 mt-1">
+                <button onclick="initiateDevelopmentMode()" class="text-xs font-extrabold bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-black px-2.5 py-1.5 rounded-xl shadow-lg shadow-teal-500/25 transition min-h-[32px]">📈 Project</button>
+                <button onclick="initiateReplacementMode()" class="text-xs font-extrabold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-xl transition min-h-[32px]">Replace</button>
+              </div>
             </div>
           </div>
 
@@ -722,6 +729,317 @@
 
     </div>
 
+    <!-- Development Projection Search Bar -->
+    <div id="devSearchContainer" class="hidden max-w-2xl mx-auto glass-card p-3 sm:p-3.5 rounded-2xl mb-4 sm:mb-6 relative z-40">
+      <div class="relative w-full">
+        <input 
+          id="devSearchInput" 
+          type="text" 
+          placeholder="Search player for Development Projection (e.g., Lamine Yamal, Saka, Bellingham, Musiala)..."
+          class="w-full bg-[#141a24] border border-emerald-500/40 rounded-xl px-4 py-2.5 pl-10 text-xs sm:text-sm focus:outline-none focus:border-emerald-500 transition placeholder-slate-500 text-white"
+          oninput="handleSearch(this.value, 'devTarget')"
+        />
+        <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <div id="resultsDevTarget" class="hidden absolute top-12 left-0 right-0 bg-[#161d2b] border border-slate-600/80 rounded-xl shadow-2xl shadow-black/90 ring-1 ring-emerald-500/20 max-h-56 overflow-y-auto z-50"></div>
+      </div>
+    </div>
+
+    <!-- VIEW 6: PLAYER DEVELOPMENT PROJECTION DASHBOARD -->
+    <div id="developmentDashboard" class="hidden space-y-6 relative z-10">
+      
+      <!-- HERO BANNER (REUSING EXISTING COMPONENTS) -->
+      <div class="glass-card hero-gradient p-4 sm:p-6 rounded-3xl border border-emerald-500/30 relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-5 sm:gap-6 relative z-10">
+          
+          <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-5 w-full lg:w-auto">
+            <div class="relative flex-shrink-0">
+              <img 
+                id="devPlayerFaceImg" 
+                referrerpolicy="no-referrer"
+                src="" 
+                alt="Player Face" 
+                class="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-emerald-500/40 bg-[#161d2b] shadow-xl shadow-emerald-500/10"
+                onerror="handleFaceFallback(this)"
+              />
+              <img id="devCountryFlagImg" src="https://flagcdn.com/28x21/eu.png" alt="Country" class="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-6 h-4 sm:w-7 sm:h-5 rounded shadow-md border border-slate-700">
+            </div>
+
+            <div>
+              <div class="flex items-center justify-center sm:justify-start gap-2">
+                <span id="devPlayerPosBadge" class="text-[10px] sm:text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">RW</span>
+                <span id="devClassificationBadge" class="text-[10px] sm:text-[11px] font-bold px-3 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm">🔥 HIGH DEVELOPMENT</span>
+              </div>
+              <h1 id="devPlayerName" class="text-2xl sm:text-4xl font-black text-white mt-1">Player Name</h1>
+              
+              <div class="flex items-center justify-center sm:justify-start gap-2 mt-1.5 text-slate-300 text-xs sm:text-sm">
+                <img id="devClubCrestImg" src="https://cdn-icons-png.flaticon.com/512/53/53283.png" alt="Club Crest" class="w-4 h-4 sm:w-5 sm:h-5 object-contain">
+                <span id="devPlayerTeamName" class="font-bold">Barcelona</span>
+                <span class="text-slate-500">•</span>
+                <span id="devPlayerLeague" class="text-slate-400 text-xs">La Liga</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bio Metric Header Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 bg-slate-900/70 p-3 sm:p-4 rounded-2xl border border-slate-800 text-center w-full lg:w-auto">
+            <div class="px-2 sm:px-3 py-1">
+              <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Current Age</div>
+              <div id="devPlayerAgeVal" class="text-base sm:text-lg font-black text-white mt-0.5">18</div>
+            </div>
+            <div class="px-2 sm:px-3 py-1 sm:border-l border-slate-800">
+              <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Current Score</div>
+              <div id="devCurrentScoreVal" class="text-base sm:text-lg font-black text-white mt-0.5">88</div>
+            </div>
+            <div class="px-2 sm:px-3 py-1 border-t sm:border-t-0 sm:border-l border-slate-800">
+              <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Projected 26/27</div>
+              <div id="devProjectedScoreVal" class="text-base sm:text-lg font-black text-emerald-400 mt-0.5">91</div>
+            </div>
+            <div class="px-2 sm:px-3 py-1 border-t sm:border-t-0 sm:border-l border-slate-800 flex flex-col justify-center items-center">
+              <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Growth Delta</div>
+              <div id="devGrowthDeltaVal" class="text-base sm:text-lg font-black text-emerald-400 mt-0.5">+3.0</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MAIN 2-COLUMN GRID FOR PROJECTION DETAILS -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- LEFT COLUMN: INTERACTIVE TIMELINE CHART & STAT MATRIX & FACTORS -->
+        <div class="lg:col-span-8 space-y-6">
+          
+          <!-- TIMELINE CHART CARD -->
+          <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 relative">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3 mb-4">
+              <div>
+                <h2 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+                  <span>📈</span> Historical → Projected Timeline
+                </h2>
+                <p class="text-xs text-slate-400 mt-0.5">Development Score trajectory across recorded & future seasons</p>
+              </div>
+              <div class="flex items-center gap-3 text-xs">
+                <span class="flex items-center gap-1.5 text-slate-300 font-semibold">
+                  <span class="w-3 h-0.5 bg-emerald-400 inline-block"></span> Recorded
+                </span>
+                <span class="flex items-center gap-1.5 text-cyan-400 font-semibold">
+                  <span class="w-3 h-0.5 border-b-2 border-dashed border-cyan-400 inline-block"></span> Projected
+                </span>
+              </div>
+            </div>
+
+            <div class="w-full h-64 sm:h-72 my-2">
+              <canvas id="devTimelineChart"></canvas>
+            </div>
+          </div>
+
+          <!-- DEVELOPMENT FACTORS CARD -->
+          <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 space-y-4">
+            <div class="border-b border-slate-800 pb-3">
+              <h3 class="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2">
+                <span>🧠</span> Development Drivers & Model Reasoning
+              </h3>
+              <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">Empirical inputs influencing the projected development trajectory</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Positive Factors -->
+              <div class="bg-emerald-500/5 p-3.5 sm:p-4 rounded-2xl border border-emerald-500/20 space-y-2">
+                <div class="text-xs font-black uppercase text-emerald-400 flex items-center gap-1.5">
+                  <span>↑</span> Positive Drivers
+                </div>
+                <ul id="devPositiveFactorsList" class="space-y-1.5 text-xs text-slate-200">
+                  <!-- Rendered dynamically -->
+                </ul>
+              </div>
+
+              <!-- Constraints & Risk Factors -->
+              <div class="bg-amber-500/5 p-3.5 sm:p-4 rounded-2xl border border-amber-500/20 space-y-2">
+                <div class="text-xs font-black uppercase text-amber-400 flex items-center gap-1.5">
+                  <span>↓</span> Potential Constraints
+                </div>
+                <ul id="devConstraintFactorsList" class="space-y-1.5 text-xs text-slate-300">
+                  <!-- Rendered dynamically -->
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- STATISTICAL DEVELOPMENT BREAKDOWN MATRIX -->
+          <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 class="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2"><span>📊</span> Performance Development Breakdown</h3>
+                <p class="text-[11px] sm:text-xs text-slate-400">Historical observations vs projected future stats</p>
+              </div>
+              <span class="text-[10px] sm:text-xs text-cyan-400 font-bold bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">* Projected values</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead>
+                  <tr class="border-b border-slate-800 text-slate-400 text-[10px] sm:text-xs uppercase font-extrabold">
+                    <th class="py-2.5 px-2">Metric</th>
+                    <th class="py-2.5 px-2 text-center">2023/24</th>
+                    <th class="py-2.5 px-2 text-center">2024/25</th>
+                    <th class="py-2.5 px-2 text-center text-white">2025/26</th>
+                    <th class="py-2.5 px-2 text-center text-cyan-400 font-black">2026/27*</th>
+                  </tr>
+                </thead>
+                <tbody id="devStatBreakdownBody" class="divide-y divide-slate-800/60 font-mono text-[11px] sm:text-xs">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: SCORE SUMMARY, SCENARIOS & PROJECTED PROFILE -->
+        <div class="lg:col-span-4 space-y-6">
+          
+          <!-- SCORE SUMMARY & CONFIDENCE CARD -->
+          <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-5 text-center">
+            <div>
+              <div class="text-xs uppercase font-bold text-slate-400 tracking-wider">Projected Score (26/27)</div>
+              <div id="devSummaryProjectedScore" class="text-4xl sm:text-5xl font-black text-emerald-400 my-1">91</div>
+              <div class="text-xs font-semibold text-slate-300 flex items-center justify-center gap-1.5 mt-1">
+                <span>Prediction Range:</span>
+                <span id="devPredictionRangeLabel" class="text-cyan-400 font-bold font-mono">87 – 94</span>
+              </div>
+            </div>
+
+            <!-- Confidence Rating Box -->
+            <div class="bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800 text-left space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400">Prediction Confidence</span>
+                <span id="devConfidenceBadge" class="text-xs font-extrabold px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Moderate</span>
+              </div>
+              <p id="devConfidenceDesc" class="text-[11px] text-slate-400">Sufficient playing time; moderate prediction variance.</p>
+            </div>
+
+            <!-- Trajectory Classification Box -->
+            <div class="bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800 text-left space-y-1">
+              <span class="text-[10px] font-bold uppercase text-slate-400 block">Projected Trajectory</span>
+              <div id="devTrajectoryTitle" class="text-sm font-extrabold text-emerald-400 flex items-center gap-2">🔥 HIGH DEVELOPMENT</div>
+            </div>
+          </div>
+
+          <!-- SCENARIO ANALYSIS SELECTOR -->
+          <div class="glass-card p-4 sm:p-5 rounded-3xl border border-slate-800 space-y-3">
+            <div class="border-b border-slate-800 pb-2">
+              <h3 class="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2">
+                <span>🔮</span> Projection Scenarios
+              </h3>
+              <p class="text-[11px] text-slate-400">Explore trajectory bounds based on prediction uncertainty</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-900 rounded-xl border border-slate-800">
+              <button id="scenarioConsBtn" onclick="updateDevScenario('conservative')" class="py-1.5 px-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">Conservative</button>
+              <button id="scenarioExpBtn" onclick="updateDevScenario('expected')" class="py-1.5 px-2 rounded-lg text-xs font-bold bg-emerald-500 text-black shadow transition">Expected</button>
+              <button id="scenarioOptBtn" onclick="updateDevScenario('optimistic')" class="py-1.5 px-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">Optimistic</button>
+            </div>
+
+            <div id="scenarioDescriptionBox" class="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-[11px] text-slate-300">
+              Baseline statistical projection assuming standard development velocity.
+            </div>
+          </div>
+
+          <!-- PROJECTED PROFILE CARD -->
+          <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4">
+            <div class="border-b border-slate-800 pb-3">
+              <h3 class="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2">
+                <span>👤</span> Projected Profile — 2026/27
+              </h3>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+                <span class="text-slate-400 font-semibold">Projected Age</span>
+                <span id="projProfileAge" class="text-white font-bold">19 yrs</span>
+              </div>
+              <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+                <span class="text-slate-400 font-semibold">Projected Score</span>
+                <span id="projProfileScore" class="text-emerald-400 font-bold font-mono text-sm">91</span>
+              </div>
+            </div>
+
+            <div class="space-y-2 pt-1">
+              <div class="text-xs font-extrabold uppercase text-slate-400">Key Strengths Projection</div>
+              <div id="devKeyStrengthsList" class="space-y-1.5">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- COMPARE DEVELOPMENT MODULE SECTION -->
+      <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-800 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="text-xs sm:text-sm font-extrabold text-white flex items-center gap-2">
+              <span>⚔️</span> Compare Player Development Projections
+            </h3>
+            <p class="text-[11px] sm:text-xs text-slate-400">Side-by-side growth trajectory comparison</p>
+          </div>
+          <div class="relative max-w-xs w-full">
+            <input 
+              id="devCompareSearchInput" 
+              type="text" 
+              placeholder="Search Player 2 to compare..." 
+              class="w-full bg-[#141a24] border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+              oninput="handleSearch(this.value, 'devCompareB')"
+            />
+            <div id="resultsDevCompareB" class="hidden absolute top-10 left-0 right-0 bg-[#161d2b] border border-slate-700 rounded-xl shadow-2xl max-h-48 overflow-y-auto z-50"></div>
+          </div>
+        </div>
+
+        <div id="devComparisonOutput" class="overflow-x-auto">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- TRANSPARENT ML MODEL INFORMATION ACCORDION -->
+      <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800">
+        <details class="group">
+          <summary class="flex items-center justify-between cursor-pointer font-bold text-xs sm:text-sm text-slate-300 hover:text-white transition select-none">
+            <span class="flex items-center gap-2">ℹ️ How is this projection calculated?</span>
+            <span class="text-slate-500 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div class="mt-4 pt-4 border-t border-slate-800 space-y-3 text-xs text-slate-400 leading-relaxed">
+            <p>
+              ScoutVision uses historical player performance, positional statistics, playing minutes, and empirical age-curves to project future player development.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800 font-mono text-[11px]">
+              <div>
+                <span class="text-slate-500 block uppercase font-sans text-[10px]">Model Architecture</span>
+                <span id="mlModelType" class="text-white font-bold">Ridge Regression</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block uppercase font-sans text-[10px]">Training Data</span>
+                <span id="mlTrainingSamples" class="text-white font-bold">2,852 Observations</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block uppercase font-sans text-[10px]">Validation MAE</span>
+                <span id="mlValidationMAE" class="text-emerald-400 font-bold">1.43</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block uppercase font-sans text-[10px]">Validation R² Score</span>
+                <span id="mlValidationR2" class="text-cyan-400 font-bold">0.977</span>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-500">
+              * Note: Development projections are statistical estimates based on historical trajectories and should be interpreted alongside physical scouting, tactical fit, and injury context.
+            </p>
+          </div>
+        </details>
+      </div>
+
+    </div>
+
     <!-- PLAYER PICKER MODAL -->
     <div id="playerPickerModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
       <div class="glass-card max-w-lg w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-700 shadow-2xl relative space-y-3 sm:space-y-4 max-h-[90vh] sm:max-h-[85vh] flex flex-col mx-1 sm:mx-0">
@@ -852,32 +1170,43 @@
       const replaceDash = document.getElementById('replaceDashboard');
       const squadDash = document.getElementById('squadDashboard');
       const optDash = document.getElementById('optimizerDashboard');
+      const devDash = document.getElementById('developmentDashboard');
 
       const singleSearch = document.getElementById('singleSearchContainer');
       const compareSearch = document.getElementById('compareSearchContainer');
       const replaceSearch = document.getElementById('replaceSearchContainer');
+      const devSearch = document.getElementById('devSearchContainer');
 
       const singleBtn = document.getElementById('singleModeBtn');
       const compareBtn = document.getElementById('compareModeBtn');
       const replaceBtn = document.getElementById('replaceModeBtn');
       const squadBtn = document.getElementById('squadModeBtn');
       const optBtn = document.getElementById('optimizerModeBtn');
+      const devBtn = document.getElementById('devModeBtn');
 
       const mobSingleBtn = document.getElementById('mobileSingleModeBtn');
       const mobCompareBtn = document.getElementById('mobileCompareModeBtn');
       const mobReplaceBtn = document.getElementById('mobileReplaceModeBtn');
       const mobSquadBtn = document.getElementById('mobileSquadModeBtn');
       const mobOptBtn = document.getElementById('mobileOptimizerModeBtn');
+      const mobDevBtn = document.getElementById('mobileDevModeBtn');
 
-      [singleDash, compareDash, replaceDash, squadDash, optDash, singleSearch, compareSearch, replaceSearch].forEach(el => el && el.classList.add('hidden'));
-      [singleBtn, compareBtn, replaceBtn, squadBtn, optBtn].forEach(b => b && (b.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition"));
-      [mobSingleBtn, mobCompareBtn, mobReplaceBtn, mobSquadBtn, mobOptBtn].forEach(b => b && (b.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2"));
+      [singleDash, compareDash, replaceDash, squadDash, optDash, devDash, singleSearch, compareSearch, replaceSearch, devSearch].forEach(el => el && el.classList.add('hidden'));
+      [singleBtn, compareBtn, replaceBtn, squadBtn, optBtn, devBtn].forEach(b => b && (b.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition"));
+      [mobSingleBtn, mobCompareBtn, mobReplaceBtn, mobSquadBtn, mobOptBtn, mobDevBtn].forEach(b => b && (b.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2"));
 
       if (mode === 'single') {
         singleDash.classList.remove('hidden');
         singleSearch.classList.remove('hidden');
         singleBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition";
         if (mobSingleBtn) mobSingleBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2";
+      } else if (mode === 'development') {
+        if (devDash) devDash.classList.remove('hidden');
+        if (devSearch) devSearch.classList.remove('hidden');
+        if (devBtn) devBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition";
+        if (mobDevBtn) mobDevBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2";
+        const targetId = activePlayerA ? activePlayerA.id : 1;
+        loadDevelopmentDashboard(targetId);
       } else if (mode === 'compare') {
         compareDash.classList.remove('hidden');
         compareSearch.classList.remove('hidden');
@@ -906,11 +1235,20 @@
       }
     }
 
+    function initiateDevelopmentMode() {
+      setMode('development');
+      if (activePlayerA) {
+        loadDevelopmentDashboard(activePlayerA.id);
+      }
+    }
+
     async function handleSearch(q, target) {
       let dropId = 'searchResults';
       if (target === 'playerA') dropId = 'resultsPlayerA';
       else if (target === 'playerB') dropId = 'resultsPlayerB';
       else if (target === 'replaceTarget') dropId = 'resultsReplaceTarget';
+      else if (target === 'devTarget') dropId = 'resultsDevTarget';
+      else if (target === 'devCompareB') dropId = 'resultsDevCompareB';
 
       const resultsDiv = document.getElementById(dropId);
       if (!q || q.length < 2) {
@@ -958,6 +1296,14 @@
       } else if (target === 'replaceTarget') {
         document.getElementById('resultsReplaceTarget').classList.add('hidden');
         await loadReplacementDashboard(id);
+      } else if (target === 'devTarget') {
+        document.getElementById('resultsDevTarget').classList.add('hidden');
+        document.getElementById('devSearchInput').value = '';
+        await loadDevelopmentDashboard(id);
+      } else if (target === 'devCompareB') {
+        document.getElementById('resultsDevCompareB').classList.add('hidden');
+        document.getElementById('devCompareSearchInput').value = '';
+        await loadDevComparison(currentDevData ? currentDevData.player_id : 1, id);
       }
     }
 
@@ -1932,6 +2278,266 @@
           </tbody>
         </table>
       `;
+    }
+
+    // ==========================================
+    // DEVELOPMENT PROJECTION DASHBOARD & ENGINE
+    // ==========================================
+    let devTimelineChartInstance = null;
+    let currentDevData = null;
+    let activeDevScenario = 'expected';
+
+    async function loadDevelopmentDashboard(playerId) {
+      try {
+        const res = await fetch(`/api/scout/player/${playerId}/development`);
+        if (!res.ok) return;
+        currentDevData = await res.json();
+        renderDevDashboard(currentDevData);
+      } catch (err) {
+        console.error("Error loading development projection:", err);
+      }
+    }
+
+    function renderDevDashboard(data) {
+      // Header info
+      document.getElementById('devPlayerName').innerText = data.name;
+      document.getElementById('devPlayerTeamName').innerText = data.team;
+      document.getElementById('devPlayerLeague').innerText = data.league || "Top 5 European";
+      document.getElementById('devPlayerPosBadge').innerText = data.position;
+      document.getElementById('devPlayerAgeVal').innerText = data.age;
+      document.getElementById('devCurrentScoreVal').innerText = data.projection.current_score;
+      document.getElementById('devProjectedScoreVal').innerText = data.projection.projected_score;
+      document.getElementById('devGrowthDeltaVal').innerText = `${data.projection.growth >= 0 ? '+' : ''}${data.projection.growth}`;
+
+      // Images
+      loadPlayerPortrait(data.name, document.getElementById('devPlayerFaceImg'));
+      document.getElementById('devClubCrestImg').src = data.club_logo;
+      document.getElementById('devCountryFlagImg').src = getFlagUrl(data.country_code);
+
+      // Badges
+      const badgeEl = document.getElementById('devClassificationBadge');
+      badgeEl.innerText = data.classification_badge;
+      document.getElementById('devTrajectoryTitle').innerText = data.classification_badge;
+
+      // Summary
+      document.getElementById('devSummaryProjectedScore').innerText = data.projection.projected_score;
+      document.getElementById('devPredictionRangeLabel').innerText = `${data.projection.prediction_range[0]} – ${data.projection.prediction_range[1]}`;
+      document.getElementById('devConfidenceBadge').innerText = data.confidence;
+      document.getElementById('devConfidenceDesc').innerText = data.confidence_desc;
+
+      // Factors
+      document.getElementById('devPositiveFactorsList').innerHTML = data.positive_factors.map(f => `<li>${f}</li>`).join('');
+      document.getElementById('devConstraintFactorsList').innerHTML = data.constraint_factors.map(f => `<li>${f}</li>`).join('');
+
+      // Stat breakdown table
+      document.getElementById('devStatBreakdownBody').innerHTML = data.stat_breakdown.map(row => `
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="py-2 px-2 font-semibold text-slate-200">${row.metric}</td>
+          <td class="py-2 px-2 text-center text-slate-400">${row.s23_24}</td>
+          <td class="py-2 px-2 text-center text-slate-400">${row.s24_25}</td>
+          <td class="py-2 px-2 text-center text-white font-bold">${row.s25_26}</td>
+          <td class="py-2 px-2 text-center text-cyan-400 font-bold">${row.s26_27_proj}</td>
+        </tr>
+      `).join('');
+
+      // Projected Profile Card
+      document.getElementById('projProfileAge').innerText = `${data.projection.projected_age} yrs`;
+      document.getElementById('projProfileScore').innerText = data.projection.projected_score;
+
+      document.getElementById('devKeyStrengthsList').innerHTML = data.key_strengths.map(s => `
+        <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/40">
+          <span class="text-slate-300 font-semibold">${s.name}</span>
+          <span class="text-amber-400 text-xs">${"★".repeat(s.stars)}${"☆".repeat(5 - s.stars)}</span>
+        </div>
+      `).join('');
+
+      // ML Model Info Accordion
+      if (data.model_info) {
+        document.getElementById('mlModelType').innerText = data.model_info.model_type;
+        document.getElementById('mlTrainingSamples').innerText = `${data.model_info.training_samples} Observations`;
+        document.getElementById('mlValidationMAE').innerText = data.model_info.metrics.mae;
+        document.getElementById('mlValidationR2').innerText = data.model_info.metrics.r2;
+      }
+
+      // Render Chart
+      renderDevTimelineChart(data.timeline, data.projection, activeDevScenario);
+
+      // Render default comparison table with benchmark player or secondary player
+      const compId = data.player_id !== 2 ? 2 : 1;
+      loadDevComparison(data.player_id, compId);
+    }
+
+    function updateDevScenario(scenario) {
+      activeDevScenario = scenario;
+      ['scenarioConsBtn', 'scenarioExpBtn', 'scenarioOptBtn'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.className = "py-1.5 px-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition";
+      });
+
+      const descBox = document.getElementById('scenarioDescriptionBox');
+      let targetScore = currentDevData.projection.projected_score;
+
+      if (scenario === 'conservative') {
+        document.getElementById('scenarioConsBtn').className = "py-1.5 px-2 rounded-lg text-xs font-bold bg-amber-500 text-black shadow transition";
+        targetScore = currentDevData.projection.conservative_score;
+        descBox.innerText = "Lower estimate bound assuming limited minutes growth & conservative stat evolution.";
+      } else if (scenario === 'optimistic') {
+        document.getElementById('scenarioOptBtn').className = "py-1.5 px-2 rounded-lg text-xs font-bold bg-cyan-400 text-black shadow transition";
+        targetScore = currentDevData.projection.optimistic_score;
+        descBox.innerText = "Upper estimate bound assuming maximum playing time & peak trajectory breakout.";
+      } else {
+        document.getElementById('scenarioExpBtn').className = "py-1.5 px-2 rounded-lg text-xs font-bold bg-emerald-500 text-black shadow transition";
+        targetScore = currentDevData.projection.expected_score;
+        descBox.innerText = "Baseline statistical projection assuming standard development velocity.";
+      }
+
+      document.getElementById('devSummaryProjectedScore').innerText = targetScore;
+      document.getElementById('projProfileScore').innerText = targetScore;
+
+      renderDevTimelineChart(currentDevData.timeline, currentDevData.projection, scenario);
+    }
+
+    function renderDevTimelineChart(timeline, projData, scenario) {
+      const ctx = document.getElementById('devTimelineChart').getContext('2d');
+      if (devTimelineChartInstance) devTimelineChartInstance.destroy();
+
+      const labels = timeline.map(t => t.season + (t.is_projected ? " (Proj)" : ""));
+      
+      let projPointVal = projData.projected_score;
+      if (scenario === 'conservative') projPointVal = projData.conservative_score;
+      else if (scenario === 'optimistic') projPointVal = projData.optimistic_score;
+
+      const scores = timeline.map((t, idx) => idx === timeline.length - 1 ? projPointVal : t.score);
+
+      devTimelineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Development Score',
+              data: scores,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+              borderWidth: 3,
+              pointBackgroundColor: ['#10b981', '#10b981', '#10b981', '#38bdf8'],
+              pointBorderColor: ['#fff', '#fff', '#fff', '#38bdf8'],
+              pointRadius: [5, 5, 6, 9],
+              pointHoverRadius: 10,
+              pointStyle: ['circle', 'circle', 'circle', 'rectRot'],
+              tension: 0.35,
+              segment: {
+                borderDash: ctx => ctx.p1DataIndex === 3 ? [6, 6] : [],
+                borderColor: ctx => ctx.p1DataIndex === 3 ? '#38bdf8' : '#10b981'
+              }
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              min: 40,
+              max: 100,
+              grid: { color: 'rgba(255, 255, 255, 0.06)' },
+              ticks: { color: '#94a3b8', font: { weight: '700' } }
+            },
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.06)' },
+              ticks: { color: '#cbd5e1', font: { weight: '700' } }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: function(items) {
+                  const idx = items[0].dataIndex;
+                  const item = timeline[idx];
+                  return `${item.season} ${item.is_projected ? '• PROJECTED' : '• RECORDED'}`;
+                },
+                label: function(item) {
+                  const idx = item.dataIndex;
+                  const t = timeline[idx];
+                  let lines = [`Development Score: ${item.formattedValue}`, `Age: ${t.age}`];
+                  if (t.is_projected && t.range) {
+                    lines.push(`Prediction Range: ${t.range[0]} – ${t.range[1]}`);
+                    lines.push(`Status: Model Estimate`);
+                  } else {
+                    lines.push(`Status: Recorded Observation`);
+                  }
+                  return lines;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    async function loadDevComparison(p1Id, p2Id) {
+      try {
+        const res = await fetch(`/api/scout/player/${p1Id}/compare-development/${p2Id}`);
+        if (!res.ok) return;
+        const compData = await res.json();
+        renderDevComparisonTable(compData);
+      } catch (err) {
+        console.error("Error loading development comparison:", err);
+      }
+    }
+
+    function renderDevComparisonTable(data) {
+      const p1 = data.player1;
+      const p2 = data.player2;
+      const c = data.comparison;
+
+      const html = `
+        <table class="w-full text-left text-xs text-slate-300 min-w-[500px]">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px] sm:text-xs">
+              <th class="py-2.5 px-3">Metric</th>
+              <th class="py-2.5 px-3 text-emerald-400 font-black">${p1.name}</th>
+              <th class="py-2.5 px-3 text-cyan-400 font-black">${p2.name}</th>
+              <th class="py-2.5 px-3 text-right">Delta</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 font-mono text-[11px] sm:text-xs">
+            <tr>
+              <td class="py-2 px-3 text-slate-400 font-sans">Current Age</td>
+              <td class="py-2 px-3 font-bold text-white">${p1.age} yrs</td>
+              <td class="py-2 px-3 font-bold text-white">${p2.age} yrs</td>
+              <td class="py-2 px-3 text-right text-slate-400">${p1.age - p2.age}</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-3 text-slate-400 font-sans">Current Score</td>
+              <td class="py-2 px-3 font-bold text-white">${p1.projection.current_score}</td>
+              <td class="py-2 px-3 font-bold text-white">${p2.projection.current_score}</td>
+              <td class="py-2 px-3 text-right text-slate-400">${(p1.projection.current_score - p2.projection.current_score).toFixed(1)}</td>
+            </tr>
+            <tr class="bg-emerald-500/5">
+              <td class="py-2.5 px-3 text-slate-200 font-sans font-bold">Projected 26/27 Score</td>
+              <td class="py-2.5 px-3 font-black text-emerald-400 text-sm">${p1.projection.projected_score}</td>
+              <td class="py-2.5 px-3 font-black text-cyan-400 text-sm">${p2.projection.projected_score}</td>
+              <td class="py-2.5 px-3 text-right font-black ${c.score_delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${c.score_delta >= 0 ? '+' : ''}${c.score_delta}</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-3 text-slate-400 font-sans">Expected Growth</td>
+              <td class="py-2 px-3 font-bold text-emerald-400">+${p1.projection.growth}</td>
+              <td class="py-2 px-3 font-bold text-cyan-400">+${p2.projection.growth}</td>
+              <td class="py-2 px-3 text-right font-bold ${c.growth_delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${c.growth_delta >= 0 ? '+' : ''}${c.growth_delta}</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-3 text-slate-400 font-sans">Confidence</td>
+              <td class="py-2 px-3 font-bold text-white">${p1.confidence}</td>
+              <td class="py-2 px-3 font-bold text-white">${p2.confidence}</td>
+              <td class="py-2 px-3 text-right text-slate-400">-</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+
+      document.getElementById('devComparisonOutput').innerHTML = html;
     }
 
     window.addEventListener('DOMContentLoaded', () => {
