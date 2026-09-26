@@ -18,6 +18,29 @@
     ::-webkit-scrollbar-track { background: rgba(15, 20, 28, 0.6); }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.4); }
+
+    /* Standardized Player Headshot & Image Frame Component */
+    .player-headshot-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border-radius: 0.85rem;
+      background: linear-gradient(145deg, #141a24 0%, #0f141c 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .player-headshot-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 20%;
+      display: block;
+      transition: opacity 0.2s ease-in-out;
+    }
   </style>
 </head>
 <body class="text-slate-100 min-h-screen overflow-x-hidden">
@@ -1086,73 +1109,144 @@
     let activePlayerB = null;
     let targetReplacementPlayer = null;
 
-    // Cache to prevent duplicate API queries
-    const faceCache = {};
+    // ========================================================
+    // REUSABLE PLAYER IMAGE COMPONENT & WATERFALL FALLBACK ENGINE
+    // SofaScore -> FotMob -> Wikipedia -> ScoutVision SVG Placeholder
+    // ========================================================
+    const resolvedImageCache = {};
 
-    function toggleMobileMenu(forceState) {
-      const menu = document.getElementById('mobileNavMenu');
-      if (!menu) return;
-      if (typeof forceState === 'boolean') {
-        if (forceState) menu.classList.remove('hidden');
-        else menu.classList.add('hidden');
-      } else {
-        menu.classList.toggle('hidden');
+    function getPlayerInitials(name) {
+      if (!name) return "SV";
+      const parts = name.trim().split(" ");
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
       }
+      return name.slice(0, 2).toUpperCase();
     }
 
-    function slugify(text) {
-      return text
-        .toString()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, '-');
+    function createSvgPlaceholderDataUrl(name) {
+      const initials = getPlayerInitials(name);
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+          </linearGradient>
+          <radialGradient id="glow" cx="50%" cy="40%" r="50%">
+            <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="128" height="128" rx="16" fill="url(#bg)"/>
+        <circle cx="64" cy="50" r="32" fill="url(#glow)"/>
+        <circle cx="64" cy="46" r="20" fill="#334155" stroke="#10b981" stroke-width="2"/>
+        <path d="M 28 108 C 28 80, 100 80, 100 108 Z" fill="#334155" stroke="#10b981" stroke-width="2"/>
+        <text x="64" y="52" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="900" font-size="16" fill="#38bdf8">${initials}</text>
+      </svg>`;
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     }
 
-    async function loadPlayerPortrait(name, imgElement) {
+    function getPlayerWaterfallSources(playerObj) {
+      const name = typeof playerObj === 'string' ? playerObj : (playerObj?.name || "Player");
+      const sofascoreId = typeof playerObj === 'object' ? playerObj?.sofascore_id : null;
+      const fotmobId = typeof playerObj === 'object' ? playerObj?.fotmob_id : null;
+      const customUrl = typeof playerObj === 'object' ? playerObj?.image_url : null;
+
+      const sources = [];
+
+      // 1. SofaScore CDN
+      if (sofascoreId) {
+        sources.push(`https://api.sofascore.app/api/v1/player/${sofascoreId}/image`);
+        sources.push(`https://img.sofascore.com/api/v1/player/${sofascoreId}/image`);
+      }
+      if (customUrl) sources.push(customUrl);
+
+      // 2. FotMob CDN
+      if (fotmobId) {
+        sources.push(`https://images.fotmob.com/image_resources/playerimages/${fotmobId}.png`);
+      }
+
+      // 3. TheSportsDB render endpoint
+      sources.push(`https://www.thesportsdb.com/images/media/player/render/${slugify(name)}.png`);
+
+      // 4. Final ScoutVision SVG Placeholder
+      sources.push(createSvgPlaceholderDataUrl(name));
+
+      return { name, sources };
+    }
+
+    async function loadPlayerPortrait(playerObj, imgElement) {
       if (!imgElement) return;
+      const name = typeof playerObj === 'string' ? playerObj : (playerObj?.name || "Player");
       imgElement.alt = name;
+      imgElement.style.objectFit = 'cover';
+      imgElement.style.objectPosition = 'center 20%';
 
-      if (faceCache[name]) {
-        imgElement.src = faceCache[name];
+      // Check resolved cache
+      if (resolvedImageCache[name]) {
+        imgElement.src = resolvedImageCache[name];
         return;
       }
 
-      // Default temporary fallback
-      imgElement.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1e293b&color=94a3b8&bold=true&size=128`;
+      const { sources } = getPlayerWaterfallSources(playerObj);
 
-      try {
-        const cleanName = name.trim().replace(/\s+/g, '_');
-        const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanName)}&prop=pageimages&format=json&pithumbsize=300&origin=*`;
-        
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        const pages = data.query?.pages;
+      // Store waterfall state on element
+      imgElement.dataset.waterfallSources = JSON.stringify(sources);
+      imgElement.dataset.waterfallIndex = "0";
+      imgElement.dataset.playerName = name;
 
-        if (pages) {
-          const pageId = Object.keys(pages)[0];
-          const thumb = pages[pageId]?.thumbnail?.source;
+      imgElement.onerror = function() {
+        handleImageWaterfall(this);
+      };
 
-          if (thumb) {
-            faceCache[name] = thumb;
-            imgElement.src = thumb;
-            return;
+      imgElement.src = sources[0];
+
+      // Parallel Wikipedia lookup if missing primary IDs
+      if (typeof playerObj === 'string' || (!playerObj?.sofascore_id && !playerObj?.fotmob_id)) {
+        try {
+          const cleanName = name.trim().replace(/\s+/g, '_');
+          const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanName)}&prop=pageimages&format=json&pithumbsize=300&origin=*`;
+          const res = await fetch(wikiUrl);
+          const data = await res.json();
+          const pages = data.query?.pages;
+          if (pages) {
+            const pageId = Object.keys(pages)[0];
+            const thumb = pages[pageId]?.thumbnail?.source;
+            if (thumb) {
+              resolvedImageCache[name] = thumb;
+              imgElement.src = thumb;
+            }
           }
+        } catch (e) {
+          // Ignore wiki error, let waterfall proceed
         }
+      }
+    }
 
-        // Secondary attempt: TheSportsDB
-        const sportsDbUrl = `https://www.thesportsdb.com/images/media/player/render/${slugify(name)}.png`;
-        imgElement.src = sportsDbUrl;
-      } catch (err) {
-        imgElement.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1e293b&color=94a3b8&bold=true&size=128`;
+    function handleImageWaterfall(imgEl) {
+      if (!imgEl) return;
+      const name = imgEl.dataset.playerName || imgEl.alt || "Player";
+      let sources = [];
+      try {
+        sources = JSON.parse(imgEl.dataset.waterfallSources || "[]");
+      } catch (e) {}
+
+      let idx = parseInt(imgEl.dataset.waterfallIndex || "0", 10) + 1;
+
+      if (sources.length > 0 && idx < sources.length) {
+        imgEl.dataset.waterfallIndex = idx.toString();
+        imgEl.src = sources[idx];
+        if (idx === sources.length - 1) {
+          imgEl.onerror = null;
+        }
+      } else {
+        imgEl.onerror = null;
+        imgEl.src = createSvgPlaceholderDataUrl(name);
       }
     }
 
     function handleFaceFallback(img) {
-      const name = img.alt || "Player";
-      img.onerror = null;
-      img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1e293b&color=94a3b8&bold=true&size=128`;
+      handleImageWaterfall(img);
     }
 
     function getFlagUrl(code) {
@@ -1348,7 +1442,7 @@
       document.getElementById('playerMinVal').innerText = p.minutes.toLocaleString();
 
       const faceImg = document.getElementById('playerFaceImg');
-      loadPlayerPortrait(p.name, faceImg);
+      loadPlayerPortrait(p, faceImg);
 
       document.getElementById('clubCrestImg').src = p.club_logo;
       document.getElementById('countryFlagImg').src = getFlagUrl(p.country_code);

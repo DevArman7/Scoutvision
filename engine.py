@@ -101,6 +101,15 @@ class ScoutingEngine:
         from development import DevelopmentProjectionEngine
         self.dev_engine = DevelopmentProjectionEngine(self.df)
 
+    def _enrich_player_images(self, p_dict: Dict[str, Any]) -> Dict[str, Any]:
+        if "name" in p_dict:
+            from player_images import get_player_image_metadata
+            img_meta = get_player_image_metadata(p_dict["name"], p_dict.get("team", ""))
+            p_dict["sofascore_id"] = img_meta.get("sofascore_id")
+            p_dict["fotmob_id"] = img_meta.get("fotmob_id")
+            p_dict["image_url"] = img_meta.get("image_url")
+        return p_dict
+
     def _preprocess(self):
         for metric in self.feature_columns:
             pct_col = f"{metric}_pct"
@@ -197,6 +206,7 @@ class ScoutingEngine:
         results = filtered[existing].head(30).to_dict(orient="records")
         for r in results:
             r["club_logo"] = self._get_club_logo_url(r["team"])
+            self._enrich_player_images(r)
         return results
 
     def get_player_profile(self, player_id: int) -> Optional[Dict[str, Any]]:
@@ -214,7 +224,7 @@ class ScoutingEngine:
         report = self._generate_scouting_report(row, stats)
         team_name = str(row.get("team", "Unknown"))
 
-        return {
+        profile = {
             "id": int(row["id"]),
             "name": str(row["name"]),
             "team": team_name,
@@ -228,6 +238,7 @@ class ScoutingEngine:
             "stats": stats,
             "report": report
         }
+        return self._enrich_player_images(profile)
 
     def get_similar_players(self, player_id: int, top_k: int = 5) -> Optional[List[Dict[str, Any]]]:
         if player_id not in self.df["id"].values: return None
@@ -243,7 +254,7 @@ class ScoutingEngine:
             if match_idx == idx: continue
             if self.df.loc[match_idx, "position"] == target_pos:
                 team = str(self.df.loc[match_idx].get("team", "Unknown"))
-                similar_players.append({
+                p_item = {
                     "id": int(self.df.loc[match_idx, "id"]),
                     "name": str(self.df.loc[match_idx, "name"]),
                     "team": team,
@@ -253,7 +264,8 @@ class ScoutingEngine:
                     "age": int(self.df.loc[match_idx, "age"]),
                     "estimated_value": float(self.df.loc[match_idx, "estimated_value"]),
                     "similarity_score": round(float(score) * 100, 1)
-                })
+                }
+                similar_players.append(self._enrich_player_images(p_item))
             if len(similar_players) >= top_k: break
 
         return similar_players
@@ -293,7 +305,7 @@ class ScoutingEngine:
             if exclude_same_team and m_team == target_team:
                 continue
 
-            targets.append({
+            p_item = {
                 "id": int(self.df.loc[match_idx, "id"]),
                 "name": str(self.df.loc[match_idx, "name"]),
                 "team": m_team,
@@ -303,7 +315,8 @@ class ScoutingEngine:
                 "age": m_age,
                 "estimated_value": m_val,
                 "similarity_score": sim_pct
-            })
+            }
+            targets.append(self._enrich_player_images(p_item))
             if len(targets) >= top_k: break
 
         return targets
@@ -742,8 +755,7 @@ class ScoutingEngine:
         proj["country_code"] = str(row.get("country_code", "eu"))
         proj["league"] = str(row.get("league", "Top 5 European"))
         proj["estimated_value"] = float(row.get("estimated_value", 10.0))
-
-        return proj
+        return self._enrich_player_images(proj)
 
     def compare_development_projections(self, player_id_1: int, player_id_2: int) -> Optional[Dict[str, Any]]:
         """Compare development projections side-by-side between two players."""
