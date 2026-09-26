@@ -1223,7 +1223,7 @@
       }
     }
 
-    function handleImageWaterfall(imgEl) {
+    async function handleImageWaterfall(imgEl) {
       if (!imgEl) return;
       const name = imgEl.dataset.playerName || imgEl.alt || "Player";
       let sources = [];
@@ -1240,6 +1240,25 @@
           imgEl.onerror = null;
         }
       } else {
+        // Attempt Wikipedia lookup before final SVG placeholder if not already cached
+        try {
+          const cleanName = name.trim().replace(/\s+/g, '_');
+          const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanName)}&prop=pageimages&format=json&pithumbsize=300&origin=*`;
+          const res = await fetch(wikiUrl);
+          const data = await res.json();
+          const pages = data.query?.pages;
+          if (pages) {
+            const pageId = Object.keys(pages)[0];
+            const thumb = pages[pageId]?.thumbnail?.source;
+            if (thumb) {
+              resolvedImageCache[name] = thumb;
+              imgEl.onerror = null;
+              imgEl.src = thumb;
+              return;
+            }
+          }
+        } catch (e) {}
+
         imgEl.onerror = null;
         imgEl.src = createSvgPlaceholderDataUrl(name);
       }

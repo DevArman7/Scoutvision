@@ -63,12 +63,10 @@ def get_player_image_metadata(player_name: str, team_name: str = "") -> Dict[str
             "image_url": f"https://api.sofascore.app/api/v1/player/{sofascore_id}/image" if sofascore_id else None
         }
 
-    # Generate deterministic fallback hash IDs if direct mapping isn't in static dictionary
-    name_hash = abs(hash(clean_name.lower())) % 900000 + 100000
-    
+    # Unverified players explicitly return None so Wikipedia lookup runs naturally
     return {
         "name": clean_name,
-        "sofascore_id": str(name_hash),
-        "fotmob_id": str(name_hash + 50000),
+        "sofascore_id": None,
+        "fotmob_id": None,
         "image_url": None
     }
