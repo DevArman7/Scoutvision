@@ -56,7 +56,7 @@ The long-term goal is to evolve ScoutVision into a complete **football recruitme
 
 The primary objective of ScoutVision is to bridge the gap between:
 
-```text
+
 Raw Football Data
        ↓
 Data Processing
