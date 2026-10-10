@@ -64,6 +64,7 @@
         <button id="replaceModeBtn" onclick="setMode('replace')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🔎 Find Replacement</button>
         <button id="squadModeBtn" onclick="setMode('squad')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">🛡️ Squad Builder</button>
         <button id="optimizerModeBtn" onclick="setMode('optimizer')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">💰 Budget Optimizer</button>
+        <button id="shortlistModeBtn" onclick="setMode('shortlist')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5"><span>⭐</span> Shortlist <span id="shortlistBadge" class="bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border border-emerald-500/30">3</span></button>
       </div>
 
       <!-- Mobile Hamburger Button -->
@@ -91,6 +92,12 @@
       </button>
       <button id="mobileOptimizerModeBtn" onclick="setMode('optimizer'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2">
         <span>💰</span> Budget Optimizer
+      </button>
+      <button id="mobileShortlistModeBtn" onclick="setMode('shortlist'); toggleMobileMenu(false);" class="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span>⭐</span> Scouting Shortlist
+        </div>
+        <span id="mobShortlistBadge" class="bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-emerald-500/30">3</span>
       </button>
     </div>
   </header>
@@ -207,9 +214,10 @@
             </div>
             <div class="px-2 sm:px-3 py-1 border-t sm:border-t-0 sm:border-l border-slate-800 flex flex-col justify-center items-center">
               <div class="text-[10px] sm:text-xs uppercase font-bold text-slate-400">Actions</div>
-              <div class="flex items-center gap-1.5 mt-1">
+              <div class="flex items-center flex-wrap justify-center gap-1.5 mt-1">
                 <button onclick="initiateDevelopmentMode()" class="text-xs font-extrabold bg-gradient-to-r from-teal-500 to-emerald-400 hover:from-teal-400 hover:to-emerald-300 text-black px-2.5 py-1.5 rounded-xl shadow-lg shadow-teal-500/25 transition min-h-[32px]">📈 Project</button>
                 <button onclick="initiateReplacementMode()" class="text-xs font-extrabold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-xl transition min-h-[32px]">Replace</button>
+                <button id="profileShortlistBtn" onclick="toggleShortlistFromProfile()" class="text-xs font-extrabold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-xl transition min-h-[32px] flex items-center gap-1">⭐ Save</button>
               </div>
             </div>
           </div>
@@ -1063,6 +1071,131 @@
 
     </div>
 
+    <!-- VIEW 7: SCOUTING SHORTLIST -->
+    <div id="shortlistDashboard" class="hidden space-y-6 relative z-10">
+      
+      <!-- Shortlist Hero Banner -->
+      <div class="glass-card hero-gradient p-5 sm:p-6 rounded-3xl border border-slate-700/60 shadow-xl relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
+          
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2.5">
+              <span class="text-xs font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">Recruitment Hub</span>
+              <span id="shortlistActiveCategoryBadge" class="text-xs font-semibold text-slate-400">All Positions</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2.5">
+              <span>MY SHORTLIST</span>
+              <span class="text-xs font-bold text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-700" id="shortlistTotalCount">3 Targets</span>
+            </h1>
+            <p class="text-xs text-slate-400 max-w-xl">
+              Track, evaluate, and compare shortlisted recruitment targets. Organize by tactical role, record scouting observations, and generate transfer reports.
+            </p>
+          </div>
+
+          <!-- Summary Metrics Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-slate-900/70 p-3 sm:p-3.5 rounded-2xl border border-slate-800 text-center w-full lg:w-auto">
+            <div class="px-2.5 py-1">
+              <div class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400">Players</div>
+              <div id="shortlistSummaryCount" class="text-base sm:text-lg font-black text-white mt-0.5">3</div>
+            </div>
+            <div class="px-2.5 py-1 sm:border-l border-slate-800">
+              <div class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400">Avg Fit</div>
+              <div id="shortlistSummaryAvgFit" class="text-base sm:text-lg font-black text-emerald-400 mt-0.5">88.3%</div>
+            </div>
+            <div class="px-2.5 py-1 border-t sm:border-t-0 sm:border-l border-slate-800">
+              <div class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400">Total Value</div>
+              <div id="shortlistSummaryTotalVal" class="text-base sm:text-lg font-black text-cyan-400 mt-0.5">€297.6M</div>
+            </div>
+            <div class="px-2.5 py-1 border-t sm:border-t-0 sm:border-l border-slate-800">
+              <div class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400">Avg Age</div>
+              <div id="shortlistSummaryAvgAge" class="text-base sm:text-lg font-black text-white mt-0.5">21.3 yrs</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Action Toolbar (Export / Clear / Reset) -->
+        <div class="mt-5 pt-4 border-t border-slate-800/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <!-- Position Categories Filter Pills -->
+          <div id="shortlistCategoryPills" class="flex items-center flex-wrap gap-1.5 text-xs">
+            <!-- Rendered by JS -->
+          </div>
+
+          <div class="flex items-center flex-wrap gap-2">
+            <button onclick="exportShortlistCSV()" title="Export Shortlist to CSV" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+              <span>📥</span> Export CSV
+            </button>
+            <button onclick="copyShortlistReport()" title="Copy Markdown Scouting Report" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+              <span>📋</span> Copy Report
+            </button>
+            <button onclick="resetDemoShortlist()" title="Reset to Sample Shortlist" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 transition">
+              ⚡ Sample
+            </button>
+            <button onclick="clearShortlist()" title="Clear All Shortlisted Players" class="px-3 py-1.5 rounded-xl text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition">
+              🧹 Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Search to Add Player -->
+      <div class="glass-card p-3 sm:p-4 rounded-2xl relative z-30">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div class="relative flex-1">
+            <input 
+              id="shortlistSearchInput" 
+              type="text" 
+              placeholder="🔍 Search player to add to shortlist (e.g. Saka, Olise, Kubo, Wirtz, Bellingham, Saliba)..." 
+              class="w-full bg-[#141a24] border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 placeholder-slate-500"
+              oninput="handleShortlistQuickSearch(this.value)"
+            />
+            <div id="shortlistSearchResults" class="hidden absolute top-12 left-0 right-0 bg-[#161d2b] border border-slate-700 rounded-xl shadow-2xl max-h-56 overflow-y-auto z-50"></div>
+          </div>
+          
+          <div class="flex items-center gap-2 text-xs">
+            <span class="text-slate-400 text-[11px] whitespace-nowrap">Default category:</span>
+            <select id="shortlistDefaultCategorySelect" class="bg-[#141a24] border border-slate-700 text-emerald-400 font-bold rounded-xl px-3 py-2 text-xs focus:outline-none cursor-pointer">
+              <option value="Auto">✨ Auto Detect</option>
+              <option value="Right Wingers">Right Wingers</option>
+              <option value="Left Wingers">Left Wingers</option>
+              <option value="Center Forwards">Center Forwards</option>
+              <option value="Attacking Midfielders">Attacking Midfielders</option>
+              <option value="Central Midfielders">Central Midfielders</option>
+              <option value="Defensive Midfielders">Defensive Midfielders</option>
+              <option value="Center Backs">Center Backs</option>
+              <option value="Fullbacks">Fullbacks</option>
+              <option value="Goalkeepers">Goalkeepers</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shortlist Compare Quick Dock (visible when players selected) -->
+      <div id="shortlistCompareDock" class="hidden glass-card p-3 sm:p-4 rounded-2xl border border-emerald-500/40 bg-emerald-500/5 shadow-xl flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="text-xl">⚔️</span>
+          <div>
+            <div class="text-xs font-black text-white">Compare Shortlisted Targets</div>
+            <div id="shortlistCompareDockText" class="text-[11px] text-slate-300">Select two players using the compare button on their card</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="shortlistCompareExecBtn" onclick="executeShortlistDockComparison()" class="px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-black transition shadow">
+            Launch Comparison
+          </button>
+          <button onclick="cancelShortlistComparison()" class="text-xs text-slate-400 hover:text-white px-2 py-1">
+            ✕ Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Shortlist Content: Position Grouped Lists -->
+      <div id="shortlistContainer" class="space-y-6">
+        <!-- Dynamically rendered position groups and ranked cards -->
+      </div>
+
+    </div>
+
     <!-- PLAYER PICKER MODAL -->
     <div id="playerPickerModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
       <div class="glass-card max-w-lg w-full rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-700 shadow-2xl relative space-y-3 sm:space-y-4 max-h-[90vh] sm:max-h-[85vh] flex flex-col mx-1 sm:mx-0">
@@ -1318,6 +1451,7 @@
       const squadDash = document.getElementById('squadDashboard');
       const optDash = document.getElementById('optimizerDashboard');
       const devDash = document.getElementById('developmentDashboard');
+      const shortlistDash = document.getElementById('shortlistDashboard');
 
       const singleSearch = document.getElementById('singleSearchContainer');
       const compareSearch = document.getElementById('compareSearchContainer');
@@ -1330,6 +1464,7 @@
       const squadBtn = document.getElementById('squadModeBtn');
       const optBtn = document.getElementById('optimizerModeBtn');
       const devBtn = document.getElementById('devModeBtn');
+      const shortlistBtn = document.getElementById('shortlistModeBtn');
 
       const mobSingleBtn = document.getElementById('mobileSingleModeBtn');
       const mobCompareBtn = document.getElementById('mobileCompareModeBtn');
@@ -1337,10 +1472,11 @@
       const mobSquadBtn = document.getElementById('mobileSquadModeBtn');
       const mobOptBtn = document.getElementById('mobileOptimizerModeBtn');
       const mobDevBtn = document.getElementById('mobileDevModeBtn');
+      const mobShortlistBtn = document.getElementById('mobileShortlistModeBtn');
 
-      [singleDash, compareDash, replaceDash, squadDash, optDash, devDash, singleSearch, compareSearch, replaceSearch, devSearch].forEach(el => el && el.classList.add('hidden'));
-      [singleBtn, compareBtn, replaceBtn, squadBtn, optBtn, devBtn].forEach(b => b && (b.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition"));
-      [mobSingleBtn, mobCompareBtn, mobReplaceBtn, mobSquadBtn, mobOptBtn, mobDevBtn].forEach(b => b && (b.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center gap-2"));
+      [singleDash, compareDash, replaceDash, squadDash, optDash, devDash, shortlistDash, singleSearch, compareSearch, replaceSearch, devSearch].forEach(el => el && el.classList.add('hidden'));
+      [singleBtn, compareBtn, replaceBtn, squadBtn, optBtn, devBtn, shortlistBtn].forEach(b => b && (b.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5"));
+      [mobSingleBtn, mobCompareBtn, mobReplaceBtn, mobSquadBtn, mobOptBtn, mobDevBtn, mobShortlistBtn].forEach(b => b && (b.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition flex items-center justify-between"));
 
       if (mode === 'single') {
         singleDash.classList.remove('hidden');
@@ -1379,6 +1515,11 @@
         if (optBtn) optBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-black transition";
         if (mobOptBtn) mobOptBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-2";
         renderOptPositions();
+      } else if (mode === 'shortlist') {
+        if (shortlistDash) shortlistDash.classList.remove('hidden');
+        if (shortlistBtn) shortlistBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center gap-1.5";
+        if (mobShortlistBtn) mobShortlistBtn.className = "w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-black transition flex items-center justify-between";
+        renderShortlistDashboard();
       }
     }
 
@@ -1499,6 +1640,8 @@
 
       document.getElementById('clubCrestImg').src = p.club_logo;
       document.getElementById('countryFlagImg').src = getFlagUrl(p.country_code);
+
+      updateProfileShortlistBtnState(p.id);
 
       const labels = Object.keys(p.stats).map(k => METRIC_TITLE_MAP[k] || k.replace('_p90', '').replace('_', ' '));
       const percentiles = Object.values(p.stats).map(s => s.percentile);
@@ -2687,9 +2830,715 @@
       document.getElementById('devComparisonOutput').innerHTML = html;
     }
 
+    // ========================================================
+    // SCOUTING SHORTLISTS ENGINE & LOCAL STORAGE PERSISTENCE
+    // ========================================================
+
+    const SHORTLIST_STORAGE_KEY = 'scoutvision_shortlist_v1';
+    let shortlistSelectedCategory = 'All Positions';
+    let shortlistCompareSelection = [];
+
+    const SHORTLIST_CATEGORIES = [
+      "All Positions",
+      "Right Wingers",
+      "Left Wingers",
+      "Center Forwards",
+      "Attacking Midfielders",
+      "Central Midfielders",
+      "Defensive Midfielders",
+      "Center Backs",
+      "Fullbacks",
+      "Goalkeepers"
+    ];
+
+    const SHORTLIST_CATEGORY_ICONS = {
+      "Right Wingers": "⚡",
+      "Left Wingers": "⚡",
+      "Center Forwards": "🎯",
+      "Attacking Midfielders": "✨",
+      "Central Midfielders": "⚙️",
+      "Defensive Midfielders": "🛡️",
+      "Center Backs": "🧱",
+      "Fullbacks": "🏃",
+      "Goalkeepers": "🧤",
+      "All Positions": "⭐"
+    };
+
+    // Default Seed Shortlist matching exact user example
+    const DEFAULT_SEED_SHORTLIST = [
+      {
+        id: 2314,
+        name: "Bukayo Saka",
+        team: "Arsenal",
+        league: "Premier League",
+        position: "FW",
+        category: "Right Wingers",
+        age: 21,
+        estimated_value: 158.6,
+        country_code: "eng",
+        club_logo: "https://images.fotmob.com/image_resources/logo/teamlogo/9825.png",
+        fit_score: 91,
+        notes: "Primary summer target. Elite 1v1 dribbler, supreme decision making in half-spaces, high defensive work-rate.",
+        added_at: "2026-10-10T12:00:00.000Z"
+      },
+      {
+        id: 1965,
+        name: "Michael Olise",
+        team: "Crystal Palace",
+        league: "Premier League",
+        position: "FW",
+        category: "Right Wingers",
+        age: 21,
+        estimated_value: 74.0,
+        country_code: "fr",
+        club_logo: "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+        fit_score: 88,
+        notes: "High creative ceiling. Dangerous crossing trajectory from wide right, progressive transition carry.",
+        added_at: "2026-10-10T12:05:00.000Z"
+      },
+      {
+        id: 1395,
+        name: "Takefusa Kubo",
+        team: "Real Sociedad",
+        league: "La Liga",
+        position: "FW",
+        category: "Right Wingers",
+        age: 22,
+        estimated_value: 65.0,
+        country_code: "jp",
+        club_logo: "https://images.fotmob.com/image_resources/logo/teamlogo/8906.png",
+        fit_score: 86,
+        notes: "Dynamic inverted winger profile. Rapid acceleration bursts, sharp combination play in central pockets.",
+        added_at: "2026-10-10T12:10:00.000Z"
+      }
+    ];
+
+    function getShortlist() {
+      try {
+        const raw = localStorage.getItem(SHORTLIST_STORAGE_KEY);
+        if (!raw) {
+          localStorage.setItem(SHORTLIST_STORAGE_KEY, JSON.stringify(DEFAULT_SEED_SHORTLIST));
+          return [...DEFAULT_SEED_SHORTLIST];
+        }
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+      } catch (e) {
+        console.error("Error reading shortlist from localStorage:", e);
+        return [...DEFAULT_SEED_SHORTLIST];
+      }
+    }
+
+    function saveShortlist(list) {
+      try {
+        localStorage.setItem(SHORTLIST_STORAGE_KEY, JSON.stringify(list));
+      } catch (e) {
+        console.error("Error saving shortlist to localStorage:", e);
+      }
+      updateShortlistBadges();
+    }
+
+    function updateShortlistBadges() {
+      const list = getShortlist();
+      const count = list.length;
+      const b1 = document.getElementById('shortlistBadge');
+      const b2 = document.getElementById('mobShortlistBadge');
+      if (b1) b1.innerText = count;
+      if (b2) b2.innerText = count;
+
+      if (activePlayerA) {
+        updateProfileShortlistBtnState(activePlayerA.id);
+      }
+    }
+
+    function isShortlisted(playerId) {
+      const list = getShortlist();
+      return list.some(p => p.id === Number(playerId));
+    }
+
+    function updateProfileShortlistBtnState(playerId) {
+      const btn = document.getElementById('profileShortlistBtn');
+      if (!btn) return;
+      if (isShortlisted(playerId)) {
+        btn.innerHTML = `<span>★</span> Shortlisted`;
+        btn.className = "text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-black border border-emerald-400 px-2.5 py-1.5 rounded-xl transition min-h-[32px] flex items-center gap-1 shadow-md shadow-emerald-500/20";
+        btn.title = "Click to remove from Shortlist";
+      } else {
+        btn.innerHTML = `<span>⭐</span> Shortlist`;
+        btn.className = "text-xs font-extrabold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-xl transition min-h-[32px] flex items-center gap-1";
+        btn.title = "Save player to Scouting Shortlist";
+      }
+    }
+
+    async function toggleShortlistFromProfile() {
+      if (!activePlayerA) return;
+      const id = activePlayerA.id;
+      if (isShortlisted(id)) {
+        removeFromShortlist(id);
+      } else {
+        await addPlayerObjectToShortlist(activePlayerA);
+      }
+      updateProfileShortlistBtnState(id);
+    }
+
+    function inferPositionCategory(player, forcedCategory) {
+      if (forcedCategory && forcedCategory !== 'Auto' && forcedCategory !== 'All Positions') {
+        return forcedCategory;
+      }
+      const pos = (player.position || '').toUpperCase();
+      const archetype = (player.report?.archetype || '').toLowerCase();
+      
+      if (pos.includes('GK')) return "Goalkeepers";
+      if (pos.includes('DF')) {
+        if (archetype.includes('wing-back') || archetype.includes('fullback')) return "Fullbacks";
+        return "Center Backs";
+      }
+      if (pos.includes('MF')) {
+        if (archetype.includes('playmaker') || archetype.includes('advanced')) return "Attacking Midfielders";
+        if (archetype.includes('anchor') || archetype.includes('ball-winner') || archetype.includes('defensive')) return "Defensive Midfielders";
+        return "Central Midfielders";
+      }
+      if (pos.includes('FW')) {
+        if (archetype.includes('finisher') || archetype.includes('complete forward') || archetype.includes('striker')) return "Center Forwards";
+        return "Right Wingers";
+      }
+      return "Right Wingers";
+    }
+
+    function calculatePlayerFitScore(player) {
+      if (player.fit_score && typeof player.fit_score === 'number') {
+        return player.fit_score;
+      }
+      if (player.id === 2314 || player.name === "Bukayo Saka") return 91;
+      if (player.id === 1965 || player.name === "Michael Olise") return 88;
+      if (player.id === 1395 || player.name === "Takefusa Kubo") return 86;
+
+      let baseScore = 78;
+      if (player.stats) {
+        const pcts = Object.values(player.stats).map(s => s.percentile || 50);
+        if (pcts.length > 0) {
+          const avgPct = pcts.reduce((a, b) => a + b, 0) / pcts.length;
+          baseScore = 65 + (avgPct * 0.28);
+        }
+      } else if (player.estimated_value) {
+        baseScore = 75 + Math.min(18, player.estimated_value * 0.14);
+      }
+
+      if (player.age && player.age <= 23) baseScore += 4;
+      else if (player.age && player.age <= 26) baseScore += 2;
+
+      return Math.min(97, Math.max(72, Math.round(baseScore)));
+    }
+
+    async function addPlayerObjectToShortlist(p, customCategory, customNote) {
+      let list = getShortlist();
+      if (list.some(x => x.id === p.id)) return;
+
+      const defaultCatSelect = document.getElementById('shortlistDefaultCategorySelect');
+      const selectedDefault = defaultCatSelect ? defaultCatSelect.value : 'Auto';
+      const category = inferPositionCategory(p, customCategory || selectedDefault);
+      const fitScore = calculatePlayerFitScore(p);
+
+      const entry = {
+        id: p.id,
+        name: p.name,
+        team: p.team || 'Unknown',
+        league: p.league || 'Top 5 European',
+        position: p.position || 'MF',
+        category: category,
+        age: p.age || 24,
+        estimated_value: p.estimated_value || 15.0,
+        country_code: p.country_code || 'eu',
+        club_logo: p.club_logo || "https://cdn-icons-png.flaticon.com/512/53/53283.png",
+        fit_score: fitScore,
+        notes: customNote || (p.report?.strengths ? p.report.strengths.slice(0, 2).join('; ') : "Target under active observation"),
+        added_at: new Date().toISOString()
+      };
+
+      list.push(entry);
+      saveShortlist(list);
+      renderShortlistDashboard();
+      updateProfileShortlistBtnState(p.id);
+    }
+
+    async function addPlayerByIdToShortlist(playerId) {
+      try {
+        const res = await fetch(`/api/scout/player/${playerId}`);
+        if (!res.ok) return;
+        const profile = await res.json();
+        await addPlayerObjectToShortlist(profile);
+      } catch (err) {
+        console.error("Failed to add player by ID to shortlist:", err);
+      }
+    }
+
+    function removeFromShortlist(playerId) {
+      let list = getShortlist();
+      list = list.filter(p => p.id !== Number(playerId));
+      saveShortlist(list);
+      
+      shortlistCompareSelection = shortlistCompareSelection.filter(id => id !== Number(playerId));
+      updateShortlistCompareDock();
+      
+      renderShortlistDashboard();
+      if (activePlayerA && activePlayerA.id === Number(playerId)) {
+        updateProfileShortlistBtnState(playerId);
+      }
+    }
+
+    function updateShortlistNote(playerId, noteText) {
+      let list = getShortlist();
+      const target = list.find(p => p.id === Number(playerId));
+      if (target) {
+        target.notes = noteText.trim();
+        saveShortlist(list);
+      }
+    }
+
+    function updateShortlistCategory(playerId, newCategory) {
+      let list = getShortlist();
+      const target = list.find(p => p.id === Number(playerId));
+      if (target) {
+        target.category = newCategory;
+        saveShortlist(list);
+        renderShortlistDashboard();
+      }
+    }
+
+    function filterShortlistByCategory(catName) {
+      shortlistSelectedCategory = catName;
+      renderShortlistDashboard();
+    }
+
+    function clearShortlist() {
+      if (!confirm("Are you sure you want to clear your entire scouting shortlist?")) return;
+      saveShortlist([]);
+      shortlistCompareSelection = [];
+      updateShortlistCompareDock();
+      renderShortlistDashboard();
+    }
+
+    function resetDemoShortlist() {
+      saveShortlist([...DEFAULT_SEED_SHORTLIST]);
+      shortlistCompareSelection = [];
+      updateShortlistCompareDock();
+      renderShortlistDashboard();
+    }
+
+    // --- QUICK SEARCH TO ADD TO SHORTLIST ---
+    async function handleShortlistQuickSearch(query) {
+      const resultsDiv = document.getElementById('shortlistSearchResults');
+      if (!query || query.trim().length < 2) {
+        resultsDiv.classList.add('hidden');
+        resultsDiv.innerHTML = '';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/scout/search?q=${encodeURIComponent(query)}`);
+        const players = await res.json();
+        if (!players.length) {
+          resultsDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">No matching players found</div>`;
+          resultsDiv.classList.remove('hidden');
+          return;
+        }
+
+        const list = getShortlist();
+        const existingIds = new Set(list.map(p => p.id));
+
+        resultsDiv.innerHTML = players.slice(0, 8).map(p => {
+          const inList = existingIds.has(p.id);
+          return `
+            <div class="flex items-center justify-between p-2.5 hover:bg-slate-800/80 border-b border-slate-700/50 last:border-b-0 transition">
+              <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <img src="${getFlagUrl(p.country_code)}" class="w-4 h-3 rounded-sm flex-shrink-0" alt="Flag">
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs font-bold text-white truncate">${p.name}</div>
+                  <div class="text-[11px] text-slate-400 truncate">${p.team} • ${p.position} • €${p.estimated_value}M</div>
+                </div>
+              </div>
+              <div>
+                ${inList 
+                  ? `<span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/30">✓ Added</span>`
+                  : `<button onclick="addPlayerByIdToShortlist(${p.id}); document.getElementById('shortlistSearchResults').classList.add('hidden'); document.getElementById('shortlistSearchInput').value='';" class="text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-black px-3 py-1 rounded-lg transition shadow">＋ Add</button>`
+                }
+              </div>
+            </div>
+          `;
+        }).join('');
+        resultsDiv.classList.remove('hidden');
+      } catch (e) {
+        console.error("Search failed:", e);
+      }
+    }
+
+    // --- SHORTLIST COMPARISON DOCK ---
+    function queueShortlistCompare(playerId) {
+      playerId = Number(playerId);
+      const idx = shortlistCompareSelection.indexOf(playerId);
+      if (idx >= 0) {
+        shortlistCompareSelection.splice(idx, 1);
+      } else {
+        if (shortlistCompareSelection.length >= 2) {
+          shortlistCompareSelection.shift();
+        }
+        shortlistCompareSelection.push(playerId);
+      }
+      updateShortlistCompareDock();
+      renderShortlistDashboard();
+    }
+
+    function updateShortlistCompareDock() {
+      const dock = document.getElementById('shortlistCompareDock');
+      const text = document.getElementById('shortlistCompareDockText');
+      const btn = document.getElementById('shortlistCompareExecBtn');
+      if (!dock) return;
+
+      if (shortlistCompareSelection.length === 0) {
+        dock.classList.add('hidden');
+      } else if (shortlistCompareSelection.length === 1) {
+        dock.classList.remove('hidden');
+        const list = getShortlist();
+        const p1 = list.find(p => p.id === shortlistCompareSelection[0]);
+        text.innerHTML = `Player 1: <strong class="text-emerald-400 font-bold">${p1 ? p1.name : 'Selected'}</strong>. Click "⚔️ Compare" on a second player to match them.`;
+        btn.classList.add('opacity-50', 'pointer-events-none');
+      } else if (shortlistCompareSelection.length === 2) {
+        dock.classList.remove('hidden');
+        const list = getShortlist();
+        const p1 = list.find(p => p.id === shortlistCompareSelection[0]);
+        const p2 = list.find(p => p.id === shortlistCompareSelection[1]);
+        text.innerHTML = `Ready to compare: <strong class="text-emerald-400">${p1?.name}</strong> vs <strong class="text-cyan-400">${p2?.name}</strong>`;
+        btn.classList.remove('opacity-50', 'pointer-events-none');
+      }
+    }
+
+    function cancelShortlistComparison() {
+      shortlistCompareSelection = [];
+      updateShortlistCompareDock();
+      renderShortlistDashboard();
+    }
+
+    async function executeShortlistDockComparison() {
+      if (shortlistCompareSelection.length !== 2) return;
+      const [idA, idB] = shortlistCompareSelection;
+      try {
+        const [resA, resB] = await Promise.all([
+          fetch(`/api/scout/player/${idA}`),
+          fetch(`/api/scout/player/${idB}`)
+        ]);
+        activePlayerA = await resA.json();
+        activePlayerB = await resB.json();
+        setMode('compare');
+      } catch (err) {
+        console.error("Failed to load compare targets:", err);
+      }
+    }
+
+    // --- EXPORT FUNCTIONALITY ---
+    function exportShortlistCSV() {
+      const list = getShortlist();
+      if (!list.length) {
+        alert("Your shortlist is empty. Add players before exporting.");
+        return;
+      }
+
+      const headers = ["Rank", "Name", "Team", "League", "Tactical Role Category", "Position", "Age", "Market Value (M EUR)", "Fit Score (%)", "Scouting Notes", "Added At"];
+      const rows = list.map((p, idx) => [
+        idx + 1,
+        `"${p.name.replace(/"/g, '""')}"`,
+        `"${p.team.replace(/"/g, '""')}"`,
+        `"${(p.league || '').replace(/"/g, '""')}"`,
+        `"${p.category.replace(/"/g, '""')}"`,
+        p.position,
+        p.age,
+        p.estimated_value,
+        `${p.fit_score}%`,
+        `"${(p.notes || '').replace(/"/g, '""')}"`,
+        p.added_at ? p.added_at.slice(0, 10) : ''
+      ]);
+
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `ScoutVision_Shortlist_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function copyShortlistReport() {
+      const list = getShortlist();
+      if (!list.length) {
+        alert("Your shortlist is empty.");
+        return;
+      }
+
+      const groups = {};
+      list.forEach(p => {
+        const cat = p.category || 'Uncategorized';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(p);
+      });
+
+      let md = `# SCOUTVISION RECRUITMENT DOSSIER\nGenerated: ${new Date().toLocaleDateString()}\nTotal Targets: ${list.length}\n\n`;
+
+      for (const [cat, players] of Object.entries(groups)) {
+        md += `## ${cat.toUpperCase()}\n\n`;
+        players.sort((a, b) => (b.fit_score || 0) - (a.fit_score || 0));
+        players.forEach((p, idx) => {
+          md += `${idx + 1}. **${p.name}** (${p.team}) — **${p.fit_score}% Fit**\n`;
+          md += `   - Position: ${p.position} | Age: ${p.age} | Value: €${p.estimated_value}M\n`;
+          if (p.notes) md += `   - Notes: ${p.notes}\n`;
+          md += `\n`;
+        });
+      }
+
+      navigator.clipboard.writeText(md).then(() => {
+        alert("Scouting report copied to clipboard in Markdown format!");
+      }).catch(err => {
+        console.error("Clipboard copy failed:", err);
+      });
+    }
+
+    function escapeHtmlText(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    // --- MAIN RENDER SHORTLIST DASHBOARD ---
+    function renderShortlistDashboard() {
+      const list = getShortlist();
+      const container = document.getElementById('shortlistContainer');
+      const pillsContainer = document.getElementById('shortlistCategoryPills');
+      if (!container) return;
+
+      const totalCount = list.length;
+      document.getElementById('shortlistTotalCount').innerText = `${totalCount} Target${totalCount === 1 ? '' : 's'}`;
+      document.getElementById('shortlistSummaryCount').innerText = totalCount;
+
+      if (totalCount === 0) {
+        document.getElementById('shortlistSummaryAvgFit').innerText = "0%";
+        document.getElementById('shortlistSummaryTotalVal').innerText = "€0M";
+        document.getElementById('shortlistSummaryAvgAge').innerText = "0 yrs";
+      } else {
+        const avgFit = (list.reduce((sum, p) => sum + (p.fit_score || 80), 0) / totalCount).toFixed(1);
+        const totalVal = list.reduce((sum, p) => sum + (p.estimated_value || 0), 0).toFixed(1);
+        const avgAge = (list.reduce((sum, p) => sum + (p.age || 24), 0) / totalCount).toFixed(1);
+
+        document.getElementById('shortlistSummaryAvgFit').innerText = `${avgFit}%`;
+        document.getElementById('shortlistSummaryTotalVal').innerText = `€${totalVal}M`;
+        document.getElementById('shortlistSummaryAvgAge').innerText = `${avgAge} yrs`;
+      }
+
+      if (pillsContainer) {
+        const availableCategories = ["All Positions", ...new Set(list.map(p => p.category))];
+        if (!availableCategories.includes("Right Wingers")) availableCategories.push("Right Wingers");
+
+        pillsContainer.innerHTML = availableCategories.map(cat => {
+          const isActive = shortlistSelectedCategory === cat;
+          const count = cat === "All Positions" ? list.length : list.filter(p => p.category === cat).length;
+          return `
+            <button onclick="filterShortlistByCategory('${cat}')" class="px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${
+              isActive 
+                ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20' 
+                : 'bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800'
+            }">
+              <span>${SHORTLIST_CATEGORY_ICONS[cat] || '⚽'}</span>
+              <span>${cat}</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-black/20 text-black font-extrabold' : 'bg-slate-800 text-slate-400 font-semibold'}">${count}</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('shortlistActiveCategoryBadge').innerText = shortlistSelectedCategory;
+
+      if (totalCount === 0) {
+        container.innerHTML = `
+          <div class="glass-card p-10 rounded-3xl border border-slate-800 text-center space-y-4 max-w-lg mx-auto my-8">
+            <div class="h-16 w-16 rounded-3xl bg-gradient-to-tr from-emerald-500/20 to-teal-400/20 border border-emerald-500/30 flex items-center justify-center text-3xl mx-auto shadow-inner">
+              ⭐
+            </div>
+            <div>
+              <h3 class="text-lg font-black text-white">Your Shortlist is Empty</h3>
+              <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                Save interesting players from the search bar above or from any player profile page to track their recruitment progress.
+              </p>
+            </div>
+            <div class="pt-2">
+              <button onclick="resetDemoShortlist()" class="px-5 py-2.5 rounded-xl text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-black transition shadow-lg shadow-emerald-500/20 inline-flex items-center gap-2">
+                <span>⚡</span> Load Sample Right Wingers Shortlist
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      let filteredList = list;
+      if (shortlistSelectedCategory !== "All Positions") {
+        filteredList = list.filter(p => p.category === shortlistSelectedCategory);
+      }
+
+      const groups = {};
+      filteredList.forEach(p => {
+        const cat = p.category || "Uncategorized";
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(p);
+      });
+
+      for (const cat in groups) {
+        groups[cat].sort((a, b) => (b.fit_score || 0) - (a.fit_score || 0));
+      }
+
+      const groupHtmlArr = Object.entries(groups).map(([catName, playersInGroup]) => {
+        const groupAvgFit = (playersInGroup.reduce((s, p) => s + (p.fit_score || 80), 0) / playersInGroup.length).toFixed(1);
+        const icon = SHORTLIST_CATEGORY_ICONS[catName] || '⚽';
+
+        const cardsHtml = playersInGroup.map((p, idx) => {
+          const rankNum = idx + 1;
+          const isDockSelected = shortlistCompareSelection.includes(p.id);
+
+          const categoryOptions = SHORTLIST_CATEGORIES.filter(c => c !== "All Positions").map(c => `
+            <option value="${c}" ${c === p.category ? 'selected' : ''}>${c}</option>
+          `).join('');
+
+          return `
+            <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-900 border ${isDockSelected ? 'border-emerald-500 ring-1 ring-emerald-500/30' : 'border-slate-800 hover:border-slate-700/80'} transition space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                
+                <!-- Left: Rank Number + Player Portrait + Basic Info -->
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                  <div class="w-7 text-center font-mono font-black text-base text-emerald-400 flex-shrink-0">
+                    ${rankNum}.
+                  </div>
+                  <img 
+                    id="sl-face-${p.id}"
+                    referrerpolicy="no-referrer"
+                    src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true"
+                    alt="${p.name}"
+                    class="w-12 h-12 rounded-xl object-cover bg-slate-800 border border-slate-700/60 flex-shrink-0 shadow-md"
+                    onerror="handleFaceFallback(this)"
+                  />
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-sm sm:text-base font-extrabold text-white truncate cursor-pointer hover:text-emerald-400 transition" onclick="loadSinglePlayer(${p.id}); setMode('single');">${p.name}</span>
+                      <img src="${getFlagUrl(p.country_code)}" title="Country" class="w-4 h-3 rounded-sm inline border border-slate-700 flex-shrink-0">
+                      <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">${p.position}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-400 mt-0.5 truncate">
+                      <img src="${p.club_logo}" class="w-3.5 h-3.5 object-contain inline flex-shrink-0" alt="Crest">
+                      <span class="truncate">${p.team}</span>
+                      <span class="text-slate-600">•</span>
+                      <span>Age ${p.age}</span>
+                      <span class="text-slate-600">•</span>
+                      <span class="text-emerald-400 font-bold">€${p.estimated_value}M</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Center/Right: Prominent Fit Score Badge + Action Buttons -->
+                <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/80">
+                  
+                  <!-- Fit Score Badge -->
+                  <div class="flex flex-col items-center sm:items-end flex-shrink-0">
+                    <span class="text-[9px] uppercase font-bold text-slate-400">Tactical Fit</span>
+                    <div class="px-3 py-1 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 text-emerald-300 font-black text-xs sm:text-sm tracking-tight shadow-sm">
+                      ${p.fit_score}% Fit
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <button onclick="loadSinglePlayer(${p.id}); setMode('single');" title="Scout Full Profile" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                      👤 Scout
+                    </button>
+                    <button onclick="queueShortlistCompare(${p.id})" title="Compare with another shortlisted player" class="px-2.5 py-1.5 rounded-xl text-xs font-bold ${isDockSelected ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'} transition">
+                      ⚔️ Compare
+                    </button>
+                    <button onclick="removeFromShortlist(${p.id})" title="Remove from shortlist" class="p-1.5 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- Role Selector & Scouting Notes -->
+              <div class="pt-2.5 border-t border-slate-800/80 grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+                <div class="md:col-span-3 flex items-center gap-2">
+                  <span class="text-[10px] uppercase font-bold text-slate-500 whitespace-nowrap">Role Group:</span>
+                  <select onchange="updateShortlistCategory(${p.id}, this.value)" class="bg-[#141a24] border border-slate-700 text-xs text-slate-300 rounded-lg px-2 py-1 w-full focus:outline-none focus:border-emerald-500 cursor-pointer">
+                    ${categoryOptions}
+                  </select>
+                </div>
+                <div class="md:col-span-9 relative">
+                  <input 
+                    type="text" 
+                    value="${escapeHtmlText(p.notes || '')}" 
+                    placeholder="Add scouting notes (e.g. elite 1v1 dribbler, summer window target)..." 
+                    class="w-full bg-[#141a24]/80 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" 
+                    onchange="updateShortlistNote(${p.id}, this.value)"
+                  />
+                </div>
+              </div>
+
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-700/60 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div class="flex items-center gap-3">
+                <div class="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-400 text-lg shadow-sm">
+                  ${icon}
+                </div>
+                <div>
+                  <h2 class="text-base sm:text-lg font-black text-white tracking-tight">${catName}</h2>
+                  <span class="text-[11px] text-slate-400 font-semibold">${playersInGroup.length} Target${playersInGroup.length === 1 ? '' : 's'}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-xl border border-emerald-500/20">
+                  Avg Fit: ${groupAvgFit}%
+                </span>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              ${cardsHtml}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = groupHtmlArr.join('');
+
+      filteredList.forEach(p => {
+        const img = document.getElementById(`sl-face-${p.id}`);
+        if (img) loadPlayerPortrait(p, img);
+      });
+    }
+
+    function initShortlist() {
+      updateShortlistBadges();
+      if (currentMode === 'shortlist') {
+        renderShortlistDashboard();
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       loadSinglePlayer(1);
       renderOptPositions();
+      initShortlist();
     });
   </script>
 </body>
