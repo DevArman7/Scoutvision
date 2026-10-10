@@ -1258,11 +1258,18 @@
     // REUSABLE PLAYER IMAGE COMPONENT & WATERFALL FALLBACK ENGINE
     // SofaScore -> FotMob -> Wikipedia -> ScoutVision SVG Placeholder
     // ========================================================
+    // REUSABLE PLAYER IMAGE COMPONENT & STRICT IDENTITY VERIFICATION ENGINE
+    // - Provider & Player-ID based caching (prevents name-collision bugs)
+    // - Request-token tracking (prevents stale async image overwrites)
+    // - Strict Wikipedia identity matching (exact title + footballer description)
+    // - Clean, instant SVG initials fallback (never displays incorrect faces)
+    // ========================================================
     const resolvedImageCache = {};
+    let imageRequestIdCounter = 0;
 
     function getPlayerInitials(name) {
       if (!name) return "SV";
-      const parts = name.trim().split(" ");
+      const parts = name.trim().split(/\s+/);
       if (parts.length >= 2) {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
       }
@@ -1291,140 +1298,157 @@
       return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     }
 
-    function getPlayerWaterfallSources(playerObj) {
-      const name = typeof playerObj === 'string' ? playerObj : (playerObj?.name || "Player");
-      const sofascoreId = typeof playerObj === 'object' ? playerObj?.sofascore_id : null;
-      const fotmobId = typeof playerObj === 'object' ? playerObj?.fotmob_id : null;
-      const customUrl = typeof playerObj === 'object' ? playerObj?.image_url : null;
-
-      const sources = [];
-
-      // 1. SofaScore CDN
-      if (sofascoreId) {
-        sources.push(`https://api.sofascore.app/api/v1/player/${sofascoreId}/image`);
-        sources.push(`https://img.sofascore.com/api/v1/player/${sofascoreId}/image`);
-      }
-      if (customUrl) sources.push(customUrl);
-
-      // 2. FotMob CDN
-      if (fotmobId) {
-        sources.push(`https://images.fotmob.com/image_resources/playerimages/${fotmobId}.png`);
-      }
-
-      // 3. TheSportsDB render endpoint
-      sources.push(`https://www.thesportsdb.com/images/media/player/render/${slugify(name)}.png`);
-
-      // 4. Final ScoutVision SVG Placeholder
-      sources.push(createSvgPlaceholderDataUrl(name));
-
-      return { name, sources };
+    function normalizePlayerName(str) {
+      if (!str) return '';
+      return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
     }
 
-    async function fetchWikipediaPlayerImage(name) {
-      if (resolvedImageCache[name]) return resolvedImageCache[name];
+    // Resolves verified player portrait strictly by player identity
+    async function resolveVerifiedPlayerPortrait(playerObj) {
+      const name = typeof playerObj === 'string' ? playerObj : (playerObj?.name || "Player");
+      const playerId = typeof playerObj === 'object' ? playerObj?.id : null;
+      const cacheKey = playerId ? `id_${playerId}` : `name_${name.toLowerCase().trim()}`;
 
-      // 1. Wikipedia Generator Search: ${name} footballer
+      // Check cache first
+      if (resolvedImageCache[cacheKey]) {
+        return resolvedImageCache[cacheKey];
+      }
+
+      // Check if backend supplied an explicitly verified image URL
+      if (playerObj?.image_url && typeof playerObj.image_url === 'string') {
+        const verifiedResult = {
+          verified: true,
+          url: playerObj.image_url,
+          provider: 'backend_verified',
+          playerId: playerId,
+          name: name
+        };
+        resolvedImageCache[cacheKey] = verifiedResult;
+        return verifiedResult;
+      }
+
+      // Query Wikipedia with strict exact title matching (NOT loose full-text generator search)
       try {
-        const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(name + ' footballer')}&gsrlimit=1&prop=pageimages&pithumbsize=400&format=json&origin=*`;
-        const res = await fetch(searchUrl);
+        const cleanTitle = name.trim().replace(/\s+/g, '_');
+        const titlesToQuery = `${encodeURIComponent(cleanTitle)}|${encodeURIComponent(cleanTitle + '_(footballer)')}`;
+        const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${titlesToQuery}&prop=pageimages|description&pithumbsize=400&format=json&origin=*`;
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          // Transient network/rate-limit error: return SVG placeholder without permanently caching failure
+          return {
+            verified: false,
+            url: createSvgPlaceholderDataUrl(name),
+            provider: 'svg_initials_placeholder',
+            fallbackReason: `HTTP_${res.status}`,
+            playerId: playerId,
+            name: name
+          };
+        }
+
         const data = await res.json();
         const pages = data.query?.pages;
+
         if (pages) {
           for (const pageId in pages) {
-            const thumb = pages[pageId]?.thumbnail?.source;
-            if (thumb) {
-              resolvedImageCache[name] = thumb;
-              return thumb;
+            if (pageId === '-1' || pages[pageId].missing !== undefined) continue;
+            const page = pages[pageId];
+            const title = page.title || '';
+            const desc = (page.description || '').toLowerCase();
+            const thumb = page.thumbnail?.source;
+
+            // Strict validation of player identity:
+            // 1. Must have a thumbnail
+            // 2. Page title must match player name or player name + (footballer) (accent-insensitive)
+            // 3. Description must confirm association football / soccer player, OR title ends with (footballer)
+            const normName = normalizePlayerName(name);
+            const normTitle = normalizePlayerName(title);
+            const isNameMatch = normTitle === normName || 
+                                normTitle === `${normName} (footballer)`;
+            const isFootballer = desc.includes('football') || desc.includes('soccer') || title.includes('(footballer)');
+
+            if (thumb && isNameMatch && isFootballer) {
+              const verifiedResult = {
+                verified: true,
+                url: thumb,
+                provider: 'wikimedia',
+                articleTitle: title,
+                playerId: playerId,
+                name: name
+              };
+              resolvedImageCache[cacheKey] = verifiedResult;
+              return verifiedResult;
             }
           }
         }
-      } catch (e) {}
-
-      // 2. Direct title fallbacks
-      const titlesToTry = [
-        name.trim().replace(/\s+/g, '_') + '_(footballer)',
-        name.trim().replace(/\s+/g, '_')
-      ];
-
-      for (const cleanTitle of titlesToTry) {
-        try {
-          const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanTitle)}&prop=pageimages&format=json&pithumbsize=400&origin=*`;
-          const res = await fetch(wikiUrl);
-          const data = await res.json();
-          const pages = data.query?.pages;
-          if (pages) {
-            for (const pageId in pages) {
-              const thumb = pages[pageId]?.thumbnail?.source;
-              if (thumb) {
-                resolvedImageCache[name] = thumb;
-                return thumb;
-              }
-            }
-          }
-        } catch (e) {}
+      } catch (err) {
+        // Transient fetch error: do not cache failure permanently
+        return {
+          verified: false,
+          url: createSvgPlaceholderDataUrl(name),
+          provider: 'svg_initials_placeholder',
+          fallbackReason: 'Network error',
+          playerId: playerId,
+          name: name
+        };
       }
 
-      return null;
+      // If legitimate response was received but identity could not be verified, record unavailable to prevent repeated attempts
+      const unavailableResult = {
+        verified: false,
+        url: createSvgPlaceholderDataUrl(name),
+        provider: 'svg_initials_placeholder',
+        fallbackReason: 'No verified football identity matched',
+        playerId: playerId,
+        name: name
+      };
+      resolvedImageCache[cacheKey] = unavailableResult;
+      return unavailableResult;
     }
 
+    // Reusable, race-condition-safe portrait loader used across all views
     async function loadPlayerPortrait(playerObj, imgElement) {
       if (!imgElement) return;
       const name = typeof playerObj === 'string' ? playerObj : (playerObj?.name || "Player");
-      // Debug log of backend image fields
-      console.log("IMAGE DATA", {
-        name: name,
-        sofascore_id: playerObj?.sofascore_id,
-        fotmob_id: playerObj?.fotmob_id,
-        image_url: playerObj?.image_url
-      });
+      const playerId = typeof playerObj === 'object' ? playerObj?.id : null;
+
+      // Assign unique request token to prevent stale async responses from overwriting images
+      const currentReqId = ++imageRequestIdCounter;
+      if (!imgElement.dataset) imgElement.dataset = {};
+      imgElement.dataset.imgReqId = String(currentReqId);
       imgElement.alt = name;
       imgElement.style.objectFit = 'cover';
       imgElement.style.objectPosition = 'center 20%';
 
-      // 1. If already cached in resolvedImageCache[name]
-      if (resolvedImageCache[name]) {
-        imgElement.src = resolvedImageCache[name];
-        imgElement.onerror = function() {
-          this.onerror = null;
-          this.src = createSvgPlaceholderDataUrl(name);
-        };
+      // Set initials placeholder immediately as baseline while resolving
+      const fallbackPlaceholder = createSvgPlaceholderDataUrl(name);
+
+      const result = await resolveVerifiedPlayerPortrait(playerObj);
+
+      // Check for stale response: if element has been reassigned to another player, discard
+      if (imgElement.dataset.imgReqId !== String(currentReqId)) {
         return;
       }
 
-      // Use only the verified direct image URL from backend (if present)
-      const verifiedUrl = typeof playerObj === 'object' ? playerObj?.image_url : null;
+      // Development diagnostics logging
+      console.log('[ScoutVision Image Diag]', {
+        name: name,
+        playerId: playerId,
+        provider: result.provider,
+        verified: result.verified,
+        selectedUrl: result.verified ? result.url : 'SVG_INITIALS',
+        fallbackReason: result.fallbackReason || 'none'
+      });
 
-      // If a verified provider URL exists, try it first
-      if (verifiedUrl) {
-        imgElement.onerror = async function() {
-          // Provider URL failed – fall back to Wikipedia
-          const wikiThumb = await fetchWikipediaPlayerImage(name);
-          if (wikiThumb) {
-            imgElement.src = wikiThumb;
-            imgElement.onerror = function() {
-              this.onerror = null;
-              this.src = createSvgPlaceholderDataUrl(name);
-            };
-          } else {
-            imgElement.src = createSvgPlaceholderDataUrl(name);
-          }
-        };
-        imgElement.src = verifiedUrl;
-        return;
-      }
-
-      // No verified provider URL – go straight to Wikipedia
-      const wikiThumb = await fetchWikipediaPlayerImage(name);
-      if (wikiThumb) {
-        imgElement.src = wikiThumb;
+      if (result.verified && result.url) {
         imgElement.onerror = function() {
           this.onerror = null;
-          this.src = createSvgPlaceholderDataUrl(name);
+          this.src = fallbackPlaceholder;
         };
+        imgElement.src = result.url;
       } else {
-        const placeholder = createSvgPlaceholderDataUrl(name);
-        resolvedImageCache[name] = placeholder;
-        imgElement.src = placeholder;
+        imgElement.onerror = null;
+        imgElement.src = fallbackPlaceholder;
       }
     }
 
@@ -1725,7 +1749,7 @@
             <img 
               id="twin-face-${p.id}"
               referrerpolicy="no-referrer"
-              src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
+              src="${createSvgPlaceholderDataUrl(p.name)}" 
               alt="${p.name}" 
               class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-cover bg-slate-800 border border-slate-700/50 flex-shrink-0" 
               onerror="handleFaceFallback(this)"
@@ -1846,7 +1870,7 @@
             <img 
               id="rep-face-${p.id}"
               referrerpolicy="no-referrer"
-              src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
+              src="${createSvgPlaceholderDataUrl(p.name)}" 
               alt="${p.name}" 
               class="w-8 h-8 rounded-lg object-cover bg-slate-800 border border-slate-700/50 flex-shrink-0" 
               onerror="handleFaceFallback(this)"
@@ -1964,7 +1988,7 @@
                     <img 
                       id="pitch-face-${slot}-${p.id}"
                       referrerpolicy="no-referrer"
-                      src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
+                      src="${createSvgPlaceholderDataUrl(p.name)}" 
                       alt="${p.name}" 
                       class="w-7 h-7 xs:w-8 xs:h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl object-cover bg-slate-800 border border-emerald-500/40"
                       onerror="handleFaceFallback(this)"
@@ -2021,7 +2045,7 @@
             <img 
               id="bench-face-${p.id}"
               referrerpolicy="no-referrer"
-              src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
+              src="${createSvgPlaceholderDataUrl(p.name)}" 
               alt="${p.name}" 
               class="w-7 h-7 rounded-lg object-cover bg-slate-800 border border-slate-700 flex-shrink-0"
               onerror="handleFaceFallback(this)"
@@ -2119,7 +2143,7 @@
             <img 
               id="cand-face-${p.id}"
               referrerpolicy="no-referrer"
-              src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" 
+              src="${createSvgPlaceholderDataUrl(p.name)}" 
               alt="${p.name}" 
               class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-cover bg-slate-800 border border-slate-700 flex-shrink-0" 
               onerror="handleFaceFallback(this)"
@@ -2455,7 +2479,7 @@
               <div onclick="loadSinglePlayer(${p.id}); setMode('single');" class="glass-card p-3 rounded-2xl border border-slate-700/60 bg-slate-900/80 hover:border-emerald-500/50 transition cursor-pointer flex items-center justify-between gap-2.5">
                 <div class="flex items-center gap-2.5 min-w-0">
                   <div class="relative flex-shrink-0">
-                    <img id="opt-best-face-${p.id}" src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true" class="w-9 h-9 rounded-xl object-cover bg-slate-800 border border-slate-700" onerror="handleFaceFallback(this)">
+                    <img id="opt-best-face-${p.id}" src="${createSvgPlaceholderDataUrl(p.name)}" class="w-9 h-9 rounded-xl object-cover bg-slate-800 border border-slate-700" onerror="handleFaceFallback(this)">
                     <span class="absolute -bottom-1 -right-1 bg-emerald-500 text-black text-[8px] font-black px-1 rounded uppercase">${p.slot}</span>
                   </div>
                   <div class="min-w-0 flex-1">
@@ -3421,7 +3445,7 @@
                   <img 
                     id="sl-face-${p.id}"
                     referrerpolicy="no-referrer"
-                    src="https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=1e293b&color=94a3b8&bold=true"
+                    src="${createSvgPlaceholderDataUrl(p.name)}"
                     alt="${p.name}"
                     class="w-12 h-12 rounded-xl object-cover bg-slate-800 border border-slate-700/60 flex-shrink-0 shadow-md"
                     onerror="handleFaceFallback(this)"
